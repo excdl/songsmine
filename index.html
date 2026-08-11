@@ -915,20 +915,40 @@ const userInfo =
 /* =====================================================
    初始化 LIFF
    ===================================================== */
-
 async function initLIFF() {
+
+  /*
+   * 先顯示初始化狀態
+   */
+
+  tableNumber.textContent =
+    "正在確認桌號...";
+
+  userInfo.textContent =
+    "LINE 初始化中...";
+
 
   try {
 
+    /*
+     * ① 初始化 LIFF
+     *
+     * 非常重要：
+     * 必須先 await liff.init()
+     * 才讀取 ?table=01
+     */
+
     await liff.init({
-      liffId: LIFF_ID
+
+      liffId:
+        "2008786085-AxITbHKe"
+
     });
 
 
     /*
-     * 注意：
-     * LIFF URL 的 ?table=01
-     * 必須在 liff.init() 後讀取
+     * ② LIFF 初始化完成後
+     *    再讀取桌號
      */
 
     const params =
@@ -937,50 +957,210 @@ async function initLIFF() {
       );
 
 
-    tableNo =
-      params.get("table") || "";
+    let table =
+      params.get("table");
 
 
     /*
-     * 如果網址沒有桌號
-     * 就嘗試讀取 localStorage
+     * 如果目前 URL 沒有 table
+     * 再嘗試從 liff.state 找
+     *
+     * 這是為了相容不同 LIFF 導轉情況
      */
 
-    if (!tableNo) {
+    if (!table) {
 
-      tableNo =
-        localStorage.getItem(
-          "ktv_table"
-        ) || "";
+      const liffState =
+        params.get(
+          "liff.state"
+        );
+
+
+      if (liffState) {
+
+        try {
+
+          const decoded =
+            decodeURIComponent(
+              liffState
+            );
+
+
+          const stateParams =
+            new URLSearchParams(
+              decoded
+            );
+
+
+          table =
+            stateParams.get(
+              "table"
+            );
+
+        } catch(error) {
+
+          console.log(
+            "liff.state 解析失敗",
+            error
+          );
+
+        }
+
+      }
 
     }
 
 
-    if (tableNo) {
+    /*
+     * ③ 如果找到桌號
+     */
 
-      localStorage.setItem(
-        "ktv_table",
-        tableNo
-      );
+    if (table) {
 
-      tableNumber.textContent =
-        `${tableNo} 號桌`;
+      /*
+       * 只接受 01～20
+       */
+
+      const tableNumberValue =
+        parseInt(
+          table,
+          10
+        );
+
+
+      if (
+        tableNumberValue >= 1 &&
+        tableNumberValue <= 20
+      ) {
+
+        table =
+          String(
+            tableNumberValue
+          ).padStart(
+            2,
+            "0"
+          );
+
+
+        tableNo =
+          table;
+
+
+        /*
+         * 儲存桌號
+         */
+
+        localStorage.setItem(
+          "ktv_table",
+          table
+        );
+
+
+        /*
+         * 顯示桌號
+         */
+
+        tableNumber.textContent =
+          `${table} 號桌`;
+
+      } else {
+
+        tableNumber.textContent =
+          "桌號無效";
+
+        tableNo = "";
+
+      }
 
     } else {
 
-      tableNumber.textContent =
-        "尚未設定";
+      /*
+       * 如果 URL 沒有桌號
+       * 才使用之前記住的桌號
+       */
+
+      const savedTable =
+        localStorage.getItem(
+          "ktv_table"
+        );
+
+
+      if (savedTable) {
+
+        const savedNumber =
+          parseInt(
+            savedTable,
+            10
+          );
+
+
+        if (
+          savedNumber >= 1 &&
+          savedNumber <= 20
+        ) {
+
+          tableNo =
+            String(
+              savedNumber
+            ).padStart(
+              2,
+              "0"
+            );
+
+
+          tableNumber.textContent =
+            `${tableNo} 號桌`;
+
+        } else {
+
+          tableNo = "";
+
+          tableNumber.textContent =
+            "尚未設定";
+
+        }
+
+      } else {
+
+        tableNo = "";
+
+        tableNumber.textContent =
+          "尚未設定";
+
+      }
 
     }
 
 
     /*
-     * LINE 登入
+     * ④ 確認 LINE 登入
      */
 
-    if (!liff.isLoggedIn()) {
+    if (
+      !liff.isLoggedIn()
+    ) {
 
-      liff.login();
+      /*
+       * 登入前先把桌號記住
+       */
+
+      if (tableNo) {
+
+        localStorage.setItem(
+          "ktv_table",
+          tableNo
+        );
+
+      }
+
+
+      liff.login({
+
+        redirectUri:
+          window.location.href
+
+      });
+
 
       return;
 
@@ -988,7 +1168,7 @@ async function initLIFF() {
 
 
     /*
-     * 取得 LINE 使用者
+     * ⑤ 取得 LINE 個人資料
      */
 
     try {
@@ -996,19 +1176,30 @@ async function initLIFF() {
       lineProfile =
         await liff.getProfile();
 
+
       userInfo.innerHTML = `
 
-        <img
-          class="user-avatar"
-          src="${escapeHtml(
-            lineProfile.pictureUrl || ""
-          )}"
-        >
+        ${
+          lineProfile.pictureUrl
+            ? `
+              <img
+                class="user-avatar"
+                src="${escapeHtml(
+                  lineProfile.pictureUrl
+                )}"
+                alt=""
+              >
+            `
+            : ""
+        }
 
         <span>
-          LINE：${escapeHtml(
+
+          LINE：
+          ${escapeHtml(
             lineProfile.displayName
           )}
+
         </span>
 
       `;
@@ -1016,34 +1207,68 @@ async function initLIFF() {
     } catch(error) {
 
       console.error(
-        "取得 LINE 使用者失敗",
+        "取得 LINE Profile 失敗",
         error
       );
 
+
       userInfo.textContent =
-        "LINE 使用者已登入";
+        "LINE 已登入";
 
     }
 
 
     /*
-     * 確認是否加入官方 LINE
+     * ⑥ 檢查是否加入官方 LINE
      */
 
     try {
 
-      const friendship =
-        await liff.getFriendship();
+      if (
+        liff.isApiAvailable(
+          "getFriendship"
+        )
+      ) {
 
-      if (!friendship.friendFlag) {
+        const friendship =
+          await liff.getFriendship();
+
 
         if (
-          liff.isApiAvailable(
-            "requestFriendship"
-          )
+          !friendship.friendFlag
         ) {
 
-          await liff.requestFriendship();
+          console.log(
+            "使用者尚未加入官方 LINE"
+          );
+
+
+          /*
+           * 如果你的 LIFF 有開啟
+           * Add friend option
+           * 就讓 LINE 自己處理
+           */
+
+          if (
+            liff.isApiAvailable(
+              "requestFriendship"
+            )
+          ) {
+
+            try {
+
+              await liff.requestFriendship();
+
+            } catch(error) {
+
+              console.log(
+                "加入官方 LINE 取消或失敗",
+                error
+              );
+
+            }
+
+          }
 
         }
 
@@ -1059,19 +1284,66 @@ async function initLIFF() {
     }
 
 
+    /*
+     * ⑦ 最後確認桌號
+     */
+
+    if (tableNo) {
+
+      tableNumber.textContent =
+        `${tableNo} 號桌`;
+
+      console.log(
+        "目前桌號：",
+        tableNo
+      );
+
+    } else {
+
+      tableNumber.textContent =
+        "尚未設定桌號";
+
+      console.warn(
+        "LIFF 開啟成功，但沒有取得 table"
+      );
+
+    }
+
+
   } catch(error) {
 
     console.error(
-      "LIFF 初始化失敗",
+      "LIFF 初始化失敗：",
       error
     );
+
+
+    tableNumber.textContent =
+      "桌號讀取失敗";
+
 
     userInfo.textContent =
       "LINE 初始化失敗";
 
+
+    /*
+     * 顯示錯誤原因
+     */
+
+    info.textContent =
+      "LINE 點歌系統初始化失敗";
+
+
+    alert(
+      "LINE 點歌系統初始化失敗\n\n" +
+      error.message
+    );
+
   }
 
 }
+
+
 
 
 /* =====================================================
