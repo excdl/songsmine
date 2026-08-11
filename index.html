@@ -1214,7 +1214,7 @@ body {
 
     <div class="modal-title">
 
-      📜 我的歷史點歌紀錄
+      📜 歷史點歌紀錄
 
     </div>
 
@@ -1457,7 +1457,7 @@ async function initLIFF() {
 
 
 /*************************************************
- * 查詢 LINE ID 歷史歌單
+ * 查詢 LINE ID 歷史歌單 (去重並提供點歌按鈕)
  *************************************************/
 
 async function fetchUserHistory() {
@@ -1489,25 +1489,50 @@ async function fetchUserHistory() {
       return;
     }
 
-    // 渲染歷史紀錄
-    historyList.innerHTML = historyData.map((item, idx) => `
-      <div class="playlist-item" style="flex-direction: column; align-items: flex-start; gap: 6px;">
-        <div style="display: flex; width: 100%; justify-content: space-between; color: #a98cff; font-size: 13px;">
-          <span>訂單編號：${escapeHtml(item.orderId || 'N/A')}</span>
-          <span>桌號：${escapeHtml(item.table || 'N/A')} 號桌</span>
+    // 收集所有歷史訂單中的歌曲並依 song_no 去重
+    const uniqueSongsMap = new Map();
+    historyData.forEach(item => {
+      if (Array.isArray(item.songs)) {
+        item.songs.forEach(s => {
+          if (s && s.song_no && !uniqueSongsMap.has(String(s.song_no))) {
+            uniqueSongsMap.set(String(s.song_no), {
+              song_no: s.song_no,
+              title: s.title || "未知歌名",
+              artist: s.artist || "未知歌手",
+              language: s.language || "",
+              category: s.category || "",
+              brand: s.brand || ""
+            });
+          }
+        });
+      }
+    });
+
+    const uniqueSongs = Array.from(uniqueSongsMap.values());
+
+    if (uniqueSongs.length === 0) {
+      historyList.innerHTML = `<div class="empty">目前沒有歷史點歌紀錄</div>`;
+      return;
+    }
+
+    // 渲染去重後的歷史歌曲清單，每首配備「＋ 加入歌單」按鈕
+    historyList.innerHTML = uniqueSongs.map(song => {
+      const exists = playlist.some(item => String(item.song_no) === String(song.song_no));
+      return `
+        <div class="song" style="margin-bottom: 8px;">
+          <div class="number">${escapeHtml(song.song_no)}</div>
+          <div class="song-info">
+            <div class="title">${escapeHtml(song.title)}</div>
+            <div class="artist">${escapeHtml(song.artist)}</div>
+            <div class="meta">${escapeHtml(song.language || "")} ${song.category ? " · " + escapeHtml(song.category) : ""}</div>
+          </div>
+          <div class="brand-tag">${escapeHtml(song.brand || "")}</div>
+          <button class="add-song ${exists ? "added" : ""}" onclick='addToPlaylist(${JSON.stringify(song)})'>
+            ${exists ? "✓ 已加入" : "＋ 加入歌單"}
+          </button>
         </div>
-        <div style="color: #ccc; font-size: 12px;">
-          時間：${escapeHtml(item.timestamp || 'N/A')}
-        </div>
-        <div style="width: 100%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; margin-top: 4px;">
-          ${Array.isArray(item.songs) ? item.songs.map((s, sIdx) => `
-            <div style="font-size: 14px; margin-bottom: 4px;">
-              ${sIdx + 1}. <strong>${escapeHtml(s.title)}</strong> - ${escapeHtml(s.artist)} <span style="color:#aaa; font-size:12px;">[${escapeHtml(s.song_no)}]</span>
-            </div>
-          `).join('') : '無歌曲資料'}
-        </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
 
   } catch (error) {
     console.error("讀取歷史歌單失敗", error);
@@ -2048,6 +2073,12 @@ function addToPlaylist(
     getCurrentSearchResults()
   );
 
+  // 同時重新整理歷史歌單畫面按鈕狀態（若開著的話）
+  const historyModal = document.getElementById("historyModal");
+  if (historyModal.classList.contains("show")) {
+    fetchUserHistory();
+  }
+
 }
 
 
@@ -2240,6 +2271,11 @@ function removeFromPlaylist(
       currentSongs
     );
 
+  }
+
+  const historyModal = document.getElementById("historyModal");
+  if (historyModal.classList.contains("show")) {
+    fetchUserHistory();
   }
 
 }
@@ -2479,7 +2515,7 @@ async function submitPlaylist() {
 
 
     /****************************************
-     * ③ 建立 LINE 美化訊息
+     * ③ 建立 LINE 美化訊息 (簡潔清晰版)
      ****************************************/
 
     const displayName =
@@ -2488,11 +2524,8 @@ async function submitPlaylist() {
         : "未知";
 
     let message =
-      `┏━━━━━━━━━━━━━━┓\n` +
-      `  🎤 MEI MEI KTV 點歌單\n` +
-      `┗━━━━━━━━━━━━━━┛\n` +
-      `📍 桌號：${tableNo} 號桌\n` +
-      `👤 暱稱：${displayName}\n` +
+      `🎤 【點歌通知】 ${tableNo} 號桌\n` +
+      `👤 點歌人：${displayName}\n` +
       `────────────────\n`;
 
     playlist.forEach(
@@ -2503,17 +2536,15 @@ async function submitPlaylist() {
             .padStart(2, '0');
 
         message +=
-          `${numStr}. ${song.title}\n` +
-          `   🎵 歌手：${song.artist}\n` +
-          `   🔢 歌號：${song.song_no} (${song.brand})\n` +
-          `────────────────\n`;
+          `${numStr}. ${song.title} - ${song.artist}\n` +
+          `   [${song.song_no}] ${song.brand}\n`;
 
       }
     );
 
     message +=
-      `📊 總計：${playlist.length} 首歌曲\n` +
-      `✨ 請開始播放 🎵`;
+      `────────────────\n` +
+      `📊 共 ${playlist.length} 首歌曲`;
 
 
     /****************************************
