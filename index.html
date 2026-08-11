@@ -1457,7 +1457,7 @@ async function initLIFF() {
 
 
 /*************************************************
- * 查詢 LINE ID 歷史歌單
+ * 查詢 LINE ID 歷史歌單（純歌曲去重 + 帶點歌按鈕）
  *************************************************/
 
 async function fetchUserHistory() {
@@ -1489,31 +1489,103 @@ async function fetchUserHistory() {
       return;
     }
 
-    // 渲染歷史紀錄
-    historyList.innerHTML = historyData.map((item, idx) => `
-      <div class="playlist-item" style="flex-direction: column; align-items: flex-start; gap: 6px;">
-        <div style="display: flex; width: 100%; justify-content: space-between; color: #a98cff; font-size: 13px;">
-          <span>訂單編號：${escapeHtml(item.orderId || 'N/A')}</span>
-          <span>桌號：${escapeHtml(item.table || 'N/A')} 號桌</span>
-        </div>
-        <div style="color: #ccc; font-size: 12px;">
-          時間：${escapeHtml(item.timestamp || 'N/A')}
-        </div>
-        <div style="width: 100%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; margin-top: 4px;">
-          ${Array.isArray(item.songs) ? item.songs.map((s, sIdx) => `
-            <div style="font-size: 14px; margin-bottom: 4px;">
-              ${sIdx + 1}. <strong>${escapeHtml(s.title)}</strong> - ${escapeHtml(s.artist)} <span style="color:#aaa; font-size:12px;">[${escapeHtml(s.song_no)}]</span>
+    // 收集所有歷史歌曲並透過 song_no 去重
+    const uniqueSongsMap = new Map();
+
+    historyData.forEach(order => {
+      if (Array.isArray(order.songs)) {
+        order.songs.forEach(song => {
+          if (song && song.song_no && !uniqueSongsMap.has(song.song_no)) {
+            uniqueSongsMap.set(song.song_no, song);
+          }
+        });
+      }
+    });
+
+    const uniqueSongs = Array.from(uniqueSongsMap.values());
+
+    if (uniqueSongs.length === 0) {
+      historyList.innerHTML = `<div class="empty">目前沒有歷史歌曲資料</div>`;
+      return;
+    }
+
+    // 渲染去重後的歷史歌曲清單（僅顯示歌號、歌名、歌手，並帶有「加入歌單」按鈕）
+    historyList.innerHTML = uniqueSongs.map((song) => {
+      const exists = playlist.some(item => String(item.song_no) === String(song.song_no));
+      const escapedSongJson = escapeHtml(JSON.stringify(song));
+
+      return `
+        <div class="song" style="margin-bottom: 8px;">
+          <div class="number">
+            ${escapeHtml(song.song_no)}
+          </div>
+          <div class="song-info">
+            <div class="title">
+              ${escapeHtml(song.title)}
             </div>
-          `).join('') : '無歌曲資料'}
+            <div class="artist">
+              ${escapeHtml(song.artist || "未知歌手")}
+            </div>
+            <div class="meta">
+              ${escapeHtml(song.language || "")} ${song.category ? " · " + escapeHtml(song.category) : ""}
+            </div>
+          </div>
+          <div class="brand-tag">
+            ${escapeHtml(song.brand || "")}
+          </div>
+          <button
+            class="add-song ${exists ? "added" : ""}"
+            onclick='addSongFromHistory(${escapedSongJson}, this)'
+          >
+            ${exists ? "✓ 已加入" : "＋ 加入歌單"}
+          </button>
         </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
 
   } catch (error) {
     console.error("讀取歷史歌單失敗", error);
     historyList.innerHTML = `<div class="empty">⚠️ 讀取失敗<br><br>${escapeHtml(error.message)}</div>`;
   }
 
+}
+
+
+/*************************************************
+ * 從歷史紀錄直接加入歌單
+ *************************************************/
+
+function addSongFromHistory(song, btnElement) {
+  const exists = playlist.some(item => String(item.song_no) === String(song.song_no));
+
+  if (exists) {
+    alert("這首歌已經在歌單裡");
+    return;
+  }
+
+  playlist.push({
+    song_no: song.song_no,
+    title: song.title,
+    artist: song.artist || "未知歌手",
+    language: song.language || "",
+    category: song.category || "",
+    brand: song.brand || ""
+  });
+
+  updatePlaylistCount();
+  updateSubmitButton();
+  renderPlaylist();
+
+  // 更新點擊的按鈕狀態
+  if (btnElement) {
+    btnElement.classList.add("added");
+    btnElement.textContent = "✓ 已加入";
+  }
+
+  // 同步更新搜尋結果畫面上的按鈕狀態（若剛好有搜尋這首歌）
+  if (currentSongs.length > 0) {
+    renderResults(currentSongs);
+  }
 }
 
 
@@ -2044,9 +2116,11 @@ function addToPlaylist(
    * 更新搜尋結果
    */
 
-  renderResults(
-    getCurrentSearchResults()
-  );
+  if (currentSongs.length > 0) {
+    renderResults(
+      currentSongs
+    );
+  }
 
 }
 
@@ -2558,7 +2632,7 @@ async function submitPlaylist() {
 
     alert(
 
-      "歌單已成功送出！\n\n" +
+      "歌單已成功送出！\n\n` +
 
       `桌號：${tableNo} 號桌\n` +
 
@@ -2577,7 +2651,7 @@ async function submitPlaylist() {
 
     alert(
 
-      "歌單送出失敗\n\n" +
+      "歌單送出失敗\n\n` +
 
       error.message
 
