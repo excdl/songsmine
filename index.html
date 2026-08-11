@@ -12,14 +12,17 @@
 
 <title>KTV 歌單查詢</title>
 
+
 <!-- LINE LIFF SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
 
 <style>
 
 * {
   box-sizing: border-box;
 }
+
 
 body {
 
@@ -222,7 +225,7 @@ body {
 
 
 /* ================================
-   LINE 使用者
+   LINE 狀態
 ================================ */
 
 .user-info {
@@ -246,6 +249,8 @@ body {
   color: #aaa;
 
   font-size: 14px;
+
+  text-align: center;
 }
 
 
@@ -258,6 +263,27 @@ body {
   border-radius: 50%;
 
   object-fit: cover;
+}
+
+
+.line-status {
+
+  color: #ffcc66;
+
+}
+
+
+.line-status.success {
+
+  color: #55dd99;
+
+}
+
+
+.line-status.error {
+
+  color: #ff6688;
+
 }
 
 
@@ -668,7 +694,7 @@ body {
 
 
 /* ================================
-   歌單 Modal
+   Modal
 ================================ */
 
 .modal {
@@ -900,12 +926,6 @@ body {
     font-size: 13px;
   }
 
-
-  .table-input-row {
-
-    max-width: 100%;
-  }
-
 }
 
 </style>
@@ -990,7 +1010,7 @@ body {
 
 
   <!-- ================================
-       LINE 使用者
+       LINE 狀態
   ================================= -->
 
   <div
@@ -998,7 +1018,11 @@ body {
     id="userInfo"
   >
 
-    LINE 登入中...
+    <span>
+
+      LINE 初始化中...
+
+    </span>
 
   </div>
 
@@ -1117,9 +1141,10 @@ body {
     <button
       class="submit-button"
       id="submitPlaylist"
+      disabled
     >
 
-      📤 送出歌單
+      🔒 尚未授權
 
     </button>
 
@@ -1129,7 +1154,7 @@ body {
 
 
 <!-- ================================
-     歌單視窗
+     歌單 Modal
 ================================= -->
 
 <div
@@ -1183,7 +1208,7 @@ body {
 
 
 /*************************************************
- * LINE LIFF
+ * ① LIFF 設定
  *************************************************/
 
 const LIFF_ID =
@@ -1191,7 +1216,9 @@ const LIFF_ID =
 
 
 /*************************************************
- * Apps Script API
+ * ② Apps Script API
+ *
+ * 使用你原本提供的完整網址
  *************************************************/
 
 const API_URL =
@@ -1199,24 +1226,35 @@ const API_URL =
 
 
 /*************************************************
- * 全域變數
+ * ③ 全域變數
  *************************************************/
 
 let currentBrand =
   "全部";
 
+
 let tableNo =
   "";
 
+
 let lineProfile =
   null;
+
 
 let playlist =
   [];
 
 
+let currentSongs =
+  [];
+
+
+let lineReady =
+  false;
+
+
 /*************************************************
- * DOM
+ * ④ DOM
  *************************************************/
 
 const keyword =
@@ -1262,16 +1300,116 @@ const submitButton =
 
 
 /*************************************************
- * 初始化 LIFF
+ * ⑤ LINE 狀態顯示
+ *************************************************/
+
+function setLineStatus(
+  text,
+  type = ""
+) {
+
+  userInfo.className =
+    "user-info";
+
+
+  if (type) {
+
+    userInfo.classList.add(
+      "line-status"
+    );
+
+    userInfo.classList.add(
+      type
+    );
+
+  }
+
+
+  userInfo.innerHTML = `
+
+    <span>
+
+      ${escapeHtml(text)}
+
+    </span>
+
+  `;
+
+}
+
+
+/*************************************************
+ * ⑥ 更新送出按鈕
+ *************************************************/
+
+function updateSubmitButton() {
+
+  if (!lineReady) {
+
+    submitButton.disabled =
+      true;
+
+    submitButton.textContent =
+      "🔒 尚未授權";
+
+    return;
+
+  }
+
+
+  if (!tableNo) {
+
+    submitButton.disabled =
+      true;
+
+    submitButton.textContent =
+      "📍 請設定桌號";
+
+    return;
+
+  }
+
+
+  if (
+    playlist.length === 0
+  ) {
+
+    submitButton.disabled =
+      true;
+
+    submitButton.textContent =
+      "📤 尚無歌曲";
+
+    return;
+
+  }
+
+
+  submitButton.disabled =
+    false;
+
+  submitButton.textContent =
+    `📤 送出歌單（${playlist.length}）`;
+
+}
+
+
+/*************************************************
+ * ⑦ 初始化 LIFF
  *************************************************/
 
 async function initLIFF() {
 
   try {
 
-    userInfo.textContent =
-      "LINE 初始化中...";
+    setLineStatus(
+      "LINE 初始化中..."
+    );
 
+
+    /***************************************
+     * LIFF 初始化
+     ***************************************/
 
     await liff.init({
 
@@ -1281,25 +1419,205 @@ async function initLIFF() {
     });
 
 
-    /*
-     * 如果不是登入狀態
-     * 導向 LINE 登入
-     */
+    console.log(
+      "LIFF 初始化成功"
+    );
+
+
+    /***************************************
+     * 如果沒有登入
+     ***************************************/
 
     if (
       !liff.isLoggedIn()
     ) {
 
-      liff.login();
+      setLineStatus(
+        "正在進行 LINE 登入..."
+      );
+
+
+      liff.login({
+
+        redirectUri:
+          window.location.href
+
+      });
+
 
       return;
 
     }
 
 
-    /*
-     * 取得 LINE 使用者
-     */
+    /***************************************
+     * 檢查 API 是否可以使用
+     ***************************************/
+
+    if (
+      !liff.isApiAvailable(
+        "sendMessages"
+      )
+    ) {
+
+      setLineStatus(
+        "目前環境無法發送 LINE 訊息",
+        "error"
+      );
+
+
+      alert(
+
+        "目前這個環境不支援 LINE 發送訊息。\n\n" +
+
+        "請從 LINE 官方帳號聊天室重新開啟點歌頁。"
+
+      );
+
+
+      return;
+
+    }
+
+
+    /***************************************
+     * 取得目前授權
+     ***************************************/
+
+    let granted = [];
+
+
+    try {
+
+      granted =
+        await liff.permission
+          .getGrantedAll();
+
+    } catch(error) {
+
+      console.warn(
+        "取得 LINE 權限失敗",
+        error
+      );
+
+    }
+
+
+    console.log(
+      "目前 LINE 權限：",
+      granted
+    );
+
+
+    /***************************************
+     * 沒有 chat_message.write
+     *
+     * 主動要求授權
+     ***************************************/
+
+    if (
+      !granted.includes(
+        "chat_message.write"
+      )
+    ) {
+
+      setLineStatus(
+        "需要 LINE 發送訊息權限..."
+      );
+
+
+      try {
+
+        await liff.permission
+          .requestAll();
+
+      } catch(error) {
+
+        console.error(
+          "LINE 權限要求失敗",
+          error
+        );
+
+
+        setLineStatus(
+          "LINE 權限尚未授權",
+          "error"
+        );
+
+
+        alert(
+
+          "尚未取得「發送聊天訊息」權限。\n\n" +
+
+          "請重新從 LINE 官方帳號聊天室開啟點歌頁，並允許權限。"
+
+        );
+
+
+        return;
+
+      }
+
+
+      /*************************************
+       * 再次確認權限
+       *************************************/
+
+      try {
+
+        granted =
+          await liff.permission
+            .getGrantedAll();
+
+      } catch(error) {
+
+        console.error(
+          error
+        );
+
+
+        granted = [];
+
+      }
+
+
+      console.log(
+        "授權後 LINE 權限：",
+        granted
+      );
+
+
+      if (
+        !granted.includes(
+          "chat_message.write"
+        )
+      ) {
+
+        setLineStatus(
+          "尚未取得發送訊息權限",
+          "error"
+        );
+
+
+        alert(
+
+          "LINE 尚未授權「發送聊天訊息」。\n\n" +
+
+          "請重新開啟點歌頁完成授權。"
+
+        );
+
+
+        return;
+
+      }
+
+    }
+
+
+    /***************************************
+     * 取得 LINE Profile
+     ***************************************/
 
     try {
 
@@ -1307,21 +1625,29 @@ async function initLIFF() {
         await liff.getProfile();
 
 
+      const avatar =
+        lineProfile.pictureUrl
+          ? `
+
+            <img
+              class="user-avatar"
+              src="${escapeHtml(
+                lineProfile.pictureUrl
+              )}"
+              alt=""
+            >
+
+          `
+          : "";
+
+
+      userInfo.className =
+        "user-info line-status success";
+
+
       userInfo.innerHTML = `
 
-        ${
-          lineProfile.pictureUrl
-            ? `
-              <img
-                class="user-avatar"
-                src="${escapeHtml(
-                  lineProfile.pictureUrl
-                )}"
-                alt=""
-              >
-            `
-            : ""
-        }
+        ${avatar}
 
         <span>
 
@@ -1329,6 +1655,10 @@ async function initLIFF() {
           ${escapeHtml(
             lineProfile.displayName
           )}
+
+          <br>
+
+          ✓ 已取得發送訊息權限
 
         </span>
 
@@ -1342,10 +1672,28 @@ async function initLIFF() {
       );
 
 
-      userInfo.textContent =
-        "LINE 已登入";
+      setLineStatus(
+        "LINE 已登入，已取得發送訊息權限",
+        "success"
+      );
 
     }
+
+
+    /***************************************
+     * 完成
+     ***************************************/
+
+    lineReady =
+      true;
+
+
+    updateSubmitButton();
+
+
+    console.log(
+      "LINE 已準備完成"
+    );
 
 
   } catch(error) {
@@ -1356,13 +1704,25 @@ async function initLIFF() {
     );
 
 
-    userInfo.textContent =
-      "LINE 初始化失敗";
+    lineReady =
+      false;
+
+
+    updateSubmitButton();
+
+
+    setLineStatus(
+      "LINE 初始化失敗",
+      "error"
+    );
 
 
     alert(
+
       "LINE 初始化失敗\n\n" +
+
       error.message
+
     );
 
   }
@@ -1371,7 +1731,7 @@ async function initLIFF() {
 
 
 /*************************************************
- * 設定桌號
+ * ⑧ 設定桌號
  *************************************************/
 
 function setTable() {
@@ -1383,10 +1743,6 @@ function setTable() {
     );
 
 
-  /*
-   * 只允許 1～20
-   */
-
   if (
     isNaN(value) ||
     value < 1 ||
@@ -1397,29 +1753,22 @@ function setTable() {
       "請輸入 1～20 的桌號"
     );
 
+
     tableInput.focus();
+
 
     return;
 
   }
 
 
-  /*
-   * 固定成兩位數
-   *
-   * 8 → 08
-   */
-
   tableNo =
-    String(value).padStart(
-      2,
-      "0"
-    );
+    String(value)
+      .padStart(
+        2,
+        "0"
+      );
 
-
-  /*
-   * 儲存到手機
-   */
 
   localStorage.setItem(
     "ktv_table",
@@ -1427,18 +1776,17 @@ function setTable() {
   );
 
 
-  /*
-   * 顯示
-   */
-
   tableNumber.textContent =
     `目前桌號：${tableNo} 號桌`;
+
+
+  updateSubmitButton();
 
 }
 
 
 /*************************************************
- * 確認桌號
+ * ⑨ 桌號確認
  *************************************************/
 
 document
@@ -1450,10 +1798,6 @@ document
     setTable
   );
 
-
-/*************************************************
- * 桌號 Enter
- *************************************************/
 
 tableInput.addEventListener(
   "keydown",
@@ -1472,7 +1816,7 @@ tableInput.addEventListener(
 
 
 /*************************************************
- * 自動帶入之前輸入的桌號
+ * ⑩ 載入之前的桌號
  *************************************************/
 
 const savedTable =
@@ -1517,49 +1861,57 @@ if (savedTable) {
 
 
 /*************************************************
- * 品牌切換
+ * ⑪ 品牌切換
  *************************************************/
 
 document
-  .querySelectorAll(".brand")
-  .forEach(button => {
+  .querySelectorAll(
+    ".brand"
+  )
+  .forEach(
+    button => {
 
-    button.addEventListener(
-      "click",
-      () => {
+      button.addEventListener(
+        "click",
+        () => {
 
-        document
-          .querySelectorAll(
-            ".brand"
-          )
-          .forEach(btn => {
+          document
+            .querySelectorAll(
+              ".brand"
+            )
+            .forEach(
+              btn => {
 
-            btn.classList.remove(
+                btn.classList
+                  .remove(
+                    "active"
+                  );
+
+              }
+            );
+
+
+          button.classList
+            .add(
               "active"
             );
 
-          });
+
+          currentBrand =
+            button.dataset.brand;
 
 
-        button.classList.add(
-          "active"
-        );
+          search();
 
+        }
+      );
 
-        currentBrand =
-          button.dataset.brand;
-
-
-        search();
-
-      }
-    );
-
-  });
+    }
+  );
 
 
 /*************************************************
- * 搜尋歌曲
+ * ⑫ 搜尋歌曲
  *************************************************/
 
 async function search() {
@@ -1588,6 +1940,7 @@ async function search() {
 
     `;
 
+
     return;
 
   }
@@ -1613,7 +1966,9 @@ async function search() {
     const url =
       API_URL +
       "?q=" +
-      encodeURIComponent(q) +
+      encodeURIComponent(
+        q
+      ) +
       "&brand=" +
       encodeURIComponent(
         currentBrand
@@ -1621,11 +1976,37 @@ async function search() {
 
 
     const response =
-      await fetch(url);
+      await fetch(
+        url
+      );
+
+
+    if (
+      !response.ok
+    ) {
+
+      throw new Error(
+        "歌曲資料庫連線失敗：" +
+        response.status
+      );
+
+    }
 
 
     const data =
       await response.json();
+
+
+    if (
+      data.success === false
+    ) {
+
+      throw new Error(
+        data.message ||
+        "歌曲搜尋失敗"
+      );
+
+    }
 
 
     renderResults(
@@ -1636,6 +2017,7 @@ async function search() {
   } catch(error) {
 
     console.error(
+      "搜尋失敗",
       error
     );
 
@@ -1648,7 +2030,9 @@ async function search() {
 
         <br><br>
 
-        請稍後再試
+        ${escapeHtml(
+          error.message
+        )}
 
       </div>
 
@@ -1664,12 +2048,16 @@ async function search() {
 
 
 /*************************************************
- * 顯示搜尋結果
+ * ⑬ 顯示搜尋結果
  *************************************************/
 
 function renderResults(
   songs
 ) {
+
+  currentSongs =
+    songs;
+
 
   info.textContent =
     `搜尋結果：${songs.length} 首`;
@@ -1695,6 +2083,7 @@ function renderResults(
 
     `;
 
+
     return;
 
   }
@@ -1702,124 +2091,168 @@ function renderResults(
 
   results.innerHTML =
     songs
-      .map(song => {
+      .map(
+        song => {
 
-        const exists =
-          playlist.some(
-            item =>
+          const exists =
+            playlist.some(
+              item =>
 
-              String(
-                item.song_no
-              ) ===
-              String(
-                song.song_no
-              )
+                String(
+                  item.song_no
+                ) ===
+                String(
+                  song.song_no
+                )
 
-          );
-
-
-        return `
-
-          <div class="song">
-
-            <div class="number">
-
-              ${escapeHtml(
-                song.song_no
-              )}
-
-            </div>
+            );
 
 
-            <div class="song-info">
+          return `
 
-              <div class="title">
+            <div class="song">
+
+              <div class="number">
 
                 ${escapeHtml(
-                  song.title
+                  song.song_no
                 )}
 
               </div>
 
 
-              <div class="artist">
+              <div class="song-info">
 
-                ${escapeHtml(
-                  song.artist ||
-                  "未知歌手"
-                )}
+                <div class="title">
+
+                  ${escapeHtml(
+                    song.title
+                  )}
+
+                </div>
+
+
+                <div class="artist">
+
+                  ${escapeHtml(
+                    song.artist ||
+                    "未知歌手"
+                  )}
+
+                </div>
+
+
+                <div class="meta">
+
+                  ${escapeHtml(
+                    song.language ||
+                    ""
+                  )}
+
+                  ${
+                    song.category
+                      ? " · " +
+                        escapeHtml(
+                          song.category
+                        )
+                      : ""
+                  }
+
+                </div>
 
               </div>
 
 
-              <div class="meta">
+              <div class="brand-tag">
 
                 ${escapeHtml(
-                  song.language ||
+                  song.brand ||
                   ""
                 )}
 
-                ${
-                  song.category
-                    ? " · " +
-                      escapeHtml(
-                        song.category
-                      )
-                    : ""
-                }
-
               </div>
 
+
+              <button
+
+                class="
+                  add-song
+                  ${exists
+                    ? "added"
+                    : ""}
+                "
+
+                data-song='${escapeHtml(
+                  JSON.stringify(
+                    song
+                  )
+                )}'
+
+              >
+
+                ${
+                  exists
+                    ? "✓ 已加入"
+                    : "＋ 加入歌單"
+                }
+
+              </button>
+
             </div>
 
+          `;
 
-            <div class="brand-tag">
-
-              ${escapeHtml(
-                song.brand ||
-                ""
-              )}
-
-            </div>
-
-
-            <button
-
-              class="
-                add-song
-                ${exists
-                  ? "added"
-                  : ""}
-              "
-
-              onclick='addToPlaylist(
-                ${JSON.stringify(
-                  song
-                )}
-              )'
-
-            >
-
-              ${
-                exists
-                  ? "✓ 已加入"
-                  : "＋ 加入歌單"
-              }
-
-            </button>
-
-          </div>
-
-        `;
-
-      })
+        }
+      )
       .join("");
+
+
+  /*
+   * 綁定加入歌單
+   */
+
+  results
+    .querySelectorAll(
+      ".add-song"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            try {
+
+              const song =
+                JSON.parse(
+                  button.dataset.song
+                );
+
+
+              addToPlaylist(
+                song
+              );
+
+            } catch(error) {
+
+              console.error(
+                error
+              );
+
+            }
+
+          }
+        );
+
+      }
+    );
 
 }
 
 
 /*************************************************
- * 加入歌單
+ * ⑭ 加入歌單
  *************************************************/
 
 function addToPlaylist(
@@ -1845,6 +2278,7 @@ function addToPlaylist(
     alert(
       "這首歌已經在歌單裡"
     );
+
 
     return;
 
@@ -1880,63 +2314,22 @@ function addToPlaylist(
 
   updatePlaylistCount();
 
+
+  updateSubmitButton();
+
+
   renderPlaylist();
 
-  /*
-   * 更新搜尋結果
-   */
 
   renderResults(
-    getCurrentSearchResults()
+    currentSongs
   );
 
 }
 
 
 /*************************************************
- * 暫存搜尋結果
- *************************************************/
-
-let currentSongs = [];
-
-
-function getCurrentSearchResults() {
-
-  return currentSongs;
-
-}
-
-
-/*************************************************
- * 修改 renderResults
- *
- * 讓搜尋結果可以重新顯示
- *************************************************/
-
-const originalRenderResults =
-  renderResults;
-
-
-/*
- * 重新包裝
- */
-
-function renderResultsWithCache(
-  songs
-) {
-
-  currentSongs =
-    songs;
-
-  originalRenderResults(
-    songs
-  );
-
-}
-
-
-/*************************************************
- * 歌單數量
+ * ⑮ 歌單數量
  *************************************************/
 
 function updatePlaylistCount() {
@@ -1952,7 +2345,7 @@ function updatePlaylistCount() {
 
 
 /*************************************************
- * 顯示歌單
+ * ⑯ 顯示歌單
  *************************************************/
 
 function renderPlaylist() {
@@ -1976,6 +2369,7 @@ function renderPlaylist() {
       </div>
 
     `;
+
 
     return;
 
@@ -2027,15 +2421,8 @@ function renderPlaylist() {
 
 
             <button
-
               class="remove-song"
-
-              onclick="
-                removeFromPlaylist(
-                  ${index}
-                )
-              "
-
+              data-index="${index}"
             >
 
               刪除
@@ -2048,11 +2435,40 @@ function renderPlaylist() {
       )
       .join("");
 
+
+  /*
+   * 綁定刪除
+   */
+
+  list
+    .querySelectorAll(
+      ".remove-song"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            removeFromPlaylist(
+              parseInt(
+                button.dataset.index,
+                10
+              )
+            );
+
+          }
+        );
+
+      }
+    );
+
 }
 
 
 /*************************************************
- * 刪除歌曲
+ * ⑰ 刪除歌單
  *************************************************/
 
 function removeFromPlaylist(
@@ -2067,28 +2483,22 @@ function removeFromPlaylist(
 
   updatePlaylistCount();
 
+
+  updateSubmitButton();
+
+
   renderPlaylist();
 
 
-  /*
-   * 重新顯示目前搜尋結果
-   */
-
-  if (
-    currentSongs.length
-  ) {
-
-    renderResults(
-      currentSongs
-    );
-
-  }
+  renderResults(
+    currentSongs
+  );
 
 }
 
 
 /*************************************************
- * 開啟歌單
+ * ⑱ 開啟歌單
  *************************************************/
 
 document
@@ -2115,7 +2525,7 @@ document
 
 
 /*************************************************
- * 關閉歌單
+ * ⑲ 關閉歌單
  *************************************************/
 
 document
@@ -2139,13 +2549,37 @@ document
 
 
 /*************************************************
- * 送出歌單
+ * ⑳ 送出歌單
  *************************************************/
 
 async function submitPlaylist() {
 
   /*
-   * 必須先設定桌號
+   * ==========================================
+   * A. 檢查 LINE
+   * ==========================================
+   */
+
+  if (!lineReady) {
+
+    alert(
+
+      "LINE 尚未完成授權。\n\n" +
+
+      "請重新從 LINE 官方帳號聊天室開啟點歌頁。"
+
+    );
+
+
+    return;
+
+  }
+
+
+  /*
+   * ==========================================
+   * B. 檢查桌號
+   * ==========================================
    */
 
   if (!tableNo) {
@@ -2154,7 +2588,9 @@ async function submitPlaylist() {
       "請先輸入您的桌號"
     );
 
+
     tableInput.focus();
+
 
     return;
 
@@ -2162,7 +2598,9 @@ async function submitPlaylist() {
 
 
   /*
-   * 必須有歌曲
+   * ==========================================
+   * C. 檢查歌單
+   * ==========================================
    */
 
   if (
@@ -2173,13 +2611,16 @@ async function submitPlaylist() {
       "請先加入歌曲"
     );
 
+
     return;
 
   }
 
 
   /*
-   * 必須在 LINE 裡
+   * ==========================================
+   * D. 確認 LINE 環境
+   * ==========================================
    */
 
   if (
@@ -2187,8 +2628,13 @@ async function submitPlaylist() {
   ) {
 
     alert(
-      "請從 LINE 官方帳號聊天室開啟點歌頁，再送出歌單。"
+
+      "目前不是從 LINE 聊天室開啟。\n\n" +
+
+      "請從 LINE 官方帳號聊天室重新開啟點歌頁。"
+
     );
+
 
     return;
 
@@ -2196,13 +2642,83 @@ async function submitPlaylist() {
 
 
   /*
-   * 確認
+   * ==========================================
+   * E. 確認 sendMessages
+   * ==========================================
+   */
+
+  if (
+    !liff.isApiAvailable(
+      "sendMessages"
+    )
+  ) {
+
+    alert(
+
+      "目前 LINE 環境不支援發送訊息。\n\n" +
+
+      "請重新從官方 LINE 聊天室開啟點歌頁。"
+
+    );
+
+
+    return;
+
+  }
+
+
+  /*
+   * ==========================================
+   * F. 再確認權限
+   * ==========================================
+   */
+
+  try {
+
+    const granted =
+      await liff.permission
+        .getGrantedAll();
+
+
+    if (
+      !granted.includes(
+        "chat_message.write"
+      )
+    ) {
+
+      alert(
+
+        "尚未取得 LINE 發送訊息權限。\n\n" +
+
+        "請重新開啟點歌頁並完成授權。"
+
+      );
+
+
+      return;
+
+    }
+
+  } catch(error) {
+
+    console.error(
+      "權限檢查失敗",
+      error
+    );
+
+  }
+
+
+  /*
+   * ==========================================
+   * G. 最後確認
+   * ==========================================
    */
 
   const ok =
     confirm(
 
-      `確定送出歌單嗎？\n\n` +
+      "確定送出歌單嗎？\n\n" +
 
       `桌號：${tableNo} 號桌\n` +
 
@@ -2219,7 +2735,7 @@ async function submitPlaylist() {
 
 
   /*
-   * 防止重複送出
+   * 防止連續按
    */
 
   submitButton.disabled =
@@ -2227,39 +2743,16 @@ async function submitPlaylist() {
 
 
   submitButton.textContent =
-    "送出中...";
+    "📤 送出中...";
 
 
   try {
 
-    /****************************************
-     * ① 建立訂單資料
-     ****************************************/
-
-    const orderData = {
-
-      table:
-        tableNo,
-
-      userId:
-        lineProfile
-          ? lineProfile.userId
-          : "",
-
-      displayName:
-        lineProfile
-          ? lineProfile.displayName
-          : "",
-
-      songs:
-        playlist
-
-    };
-
-
-    /****************************************
-     * ② 送到 Apps Script
-     ****************************************/
+    /*
+     * ========================================
+     * 1. 準備送給 Apps Script
+     * ========================================
+     */
 
     const params =
       new URLSearchParams();
@@ -2267,45 +2760,96 @@ async function submitPlaylist() {
 
     params.append(
       "table",
-      orderData.table
+      tableNo
     );
 
 
     params.append(
       "userId",
-      orderData.userId
+      lineProfile
+        ? lineProfile.userId
+        : ""
     );
 
 
     params.append(
       "displayName",
-      orderData.displayName
+      lineProfile
+        ? lineProfile.displayName
+        : ""
     );
 
 
     params.append(
       "songs",
       JSON.stringify(
-        orderData.songs
+        playlist
       )
     );
 
+
+    console.log(
+      "送出 KTV 訂單",
+      {
+        table:
+          tableNo,
+
+        songs:
+          playlist
+      }
+    );
+
+
+    /*
+     * ========================================
+     * 2. 寫入 Google Sheet
+     * ========================================
+     */
 
     const response =
       await fetch(
         API_URL,
         {
 
-          method: "POST",
+          method:
+            "POST",
 
-          body: params
+          headers: {
+
+            "Content-Type":
+              "application/x-www-form-urlencoded;charset=UTF-8"
+
+          },
+
+          body:
+            params.toString()
 
         }
       );
 
 
+    if (
+      !response.ok
+    ) {
+
+      throw new Error(
+
+        "Google Apps Script HTTP " +
+        response.status
+
+      );
+
+    }
+
+
     const result =
       await response.json();
+
+
+    console.log(
+      "Apps Script 回應",
+      result
+    );
 
 
     if (
@@ -2313,16 +2857,20 @@ async function submitPlaylist() {
     ) {
 
       throw new Error(
+
         result.message ||
-        "KTV 後台接收失敗"
+        "Google Sheet 儲存失敗"
+
       );
 
     }
 
 
-    /****************************************
-     * ③ 建立 LINE 訊息
-     ****************************************/
+    /*
+     * ========================================
+     * 3. 建立 LINE 訊息
+     * ========================================
+     */
 
     let message =
 
@@ -2356,37 +2904,67 @@ async function submitPlaylist() {
 請開始播放 🎵`;
 
 
-    /****************************************
-     * ④ 由使用者本人送到 LINE
-     ****************************************/
+    console.log(
+      "LINE 訊息",
+      message
+    );
+
+
+    /*
+     * ========================================
+     * 4. 使用者本人發送到 LINE
+     * ========================================
+     */
 
     await liff.sendMessages([
 
       {
 
-        type: "text",
+        type:
+          "text",
 
-        text: message
+        text:
+          message
 
       }
 
     ]);
 
 
-    /****************************************
-     * ⑤ 完成
-     ****************************************/
+    /*
+     * ========================================
+     * 5. 成功
+     * ========================================
+     */
 
-    const orderId =
-      result.orderId;
+    alert(
 
+      "✅ 歌單已成功送出！\n\n" +
+
+      `桌號：${tableNo} 號桌\n` +
+
+      `訂單：${result.orderId}\n` +
+
+      `歌曲：${playlist.length} 首`
+
+    );
+
+
+    /*
+     * 清除歌單
+     */
 
     playlist = [];
+
 
     currentSongs = [];
 
 
     updatePlaylistCount();
+
+
+    updateSubmitButton();
+
 
     renderPlaylist();
 
@@ -2400,17 +2978,6 @@ async function submitPlaylist() {
       );
 
 
-    alert(
-
-      "歌單已成功送出！\n\n" +
-
-      `桌號：${tableNo} 號桌\n` +
-
-      `訂單：${orderId}`
-
-    );
-
-
   } catch(error) {
 
     console.error(
@@ -2419,22 +2986,25 @@ async function submitPlaylist() {
     );
 
 
+    /*
+     * 顯示真正錯誤
+     */
+
     alert(
 
-      "歌單送出失敗\n\n" +
+      "❌ 歌單送出失敗\n\n" +
 
-      error.message
+      (
+        error.message ||
+        String(error)
+      )
 
     );
 
+
   } finally {
 
-    submitButton.disabled =
-      false;
-
-
-    submitButton.textContent =
-      "📤 送出歌單";
+    updateSubmitButton();
 
   }
 
@@ -2442,7 +3012,7 @@ async function submitPlaylist() {
 
 
 /*************************************************
- * 底部送出
+ * ㉑ 底部送出
  *************************************************/
 
 submitButton
@@ -2453,7 +3023,7 @@ submitButton
 
 
 /*************************************************
- * 彈窗送出
+ * ㉒ Modal 送出
  *************************************************/
 
 document
@@ -2467,7 +3037,7 @@ document
 
 
 /*************************************************
- * 搜尋按鈕
+ * ㉓ 搜尋按鈕
  *************************************************/
 
 document
@@ -2481,7 +3051,7 @@ document
 
 
 /*************************************************
- * Enter 搜尋
+ * ㉔ Enter 搜尋
  *************************************************/
 
 keyword.addEventListener(
@@ -2501,7 +3071,7 @@ keyword.addEventListener(
 
 
 /*************************************************
- * XSS 防護
+ * ㉕ XSS 防護
  *************************************************/
 
 function escapeHtml(
@@ -2509,63 +3079,53 @@ function escapeHtml(
 ) {
 
   return String(
-    value || ""
+    value ?? ""
   )
 
-  .replace(
-    /&/g,
-    "&amp;"
-  )
+    .replace(
+      /&/g,
+      "&amp;"
+    )
 
-  .replace(
-    /</g,
-    "&lt;"
-  )
+    .replace(
+      /</g,
+      "&lt;"
+    )
 
-  .replace(
-    />/g,
-    "&gt;"
-  )
+    .replace(
+      />/g,
+      "&gt;"
+    )
 
-  .replace(
-    /"/g,
-    "&quot;"
-  )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
 
-  .replace(
-    /'/g,
-    "&#039;"
-  );
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
 
 
 /*************************************************
- * 修正搜尋結果快取
- *************************************************/
-
-const originalSearch =
-  search;
-
-
-search =
-  async function() {
-
-    await originalSearch();
-
-  };
-
-
-/*************************************************
- * 初始化
+ * ㉖ 啟動
  *************************************************/
 
 initLIFF();
 
+updatePlaylistCount();
+
+updateSubmitButton();
+
 </script>
+
 
 </body>
 
 </html>
+
 
 
