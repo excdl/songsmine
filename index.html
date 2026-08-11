@@ -2,927 +2,2568 @@
 <html lang="zh-Hant">
 
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MEI MEI KTV 點歌單</title>
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>KTV 歌單查詢</title>
 
 <!-- LINE LIFF SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
+
 * {
   box-sizing: border-box;
 }
 
 body {
+
   margin: 0;
-  font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-  background: linear-gradient(135deg, #080812, #15102c);
+
+  font-family:
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif;
+
+  background:
+    linear-gradient(
+      135deg,
+      #080812,
+      #15102c
+    );
+
   color: white;
+
   min-height: 100vh;
 }
+
 
 /* ================================
    主容器
 ================================ */
+
 .container {
-  width: min(900px, calc(100% - 30px));
+
+  width:
+    min(
+      900px,
+      calc(100% - 30px)
+    );
+
   margin: auto;
-  padding: 20px 0 120px;
+
+  padding:
+    20px 0 120px;
 }
+
 
 /* ================================
    Header
 ================================ */
+
 .header {
+
   text-align: center;
-  padding: 10px 0 20px;
+
+  padding:
+    10px 0 20px;
 }
 
+
 .logo {
+
   font-size: 32px;
+
   font-weight: bold;
-  background: linear-gradient(90deg, #ff2bd6, #7c4dff, #22d3ee);
+
+  background:
+    linear-gradient(
+      90deg,
+      #ff2bd6,
+      #7c4dff,
+      #22d3ee
+    );
+
   -webkit-background-clip: text;
+
   color: transparent;
 }
 
+
 .subtitle {
+
   color: #999;
+
   margin-top: 8px;
 }
+
 
 /* ================================
    桌號
 ================================ */
+
 .table-info {
-  background: linear-gradient(135deg, rgba(255,43,214,.15), rgba(112,76,255,.15));
-  border: 1px solid rgba(255,255,255,.1);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,43,214,.15),
+      rgba(112,76,255,.15)
+    );
+
+  border:
+    1px solid
+    rgba(255,255,255,.1);
+
   border-radius: 14px;
+
   padding: 16px;
+
   margin-bottom: 15px;
+
   text-align: center;
 }
 
+
 .table-label {
+
   color: #aaa;
+
   font-size: 14px;
+
   margin-bottom: 10px;
 }
 
+
 .table-input-row {
+
   display: flex;
+
   gap: 10px;
+
   max-width: 400px;
+
   margin: auto;
 }
 
+
 .table-input-row input {
+
   flex: 1;
+
   height: 48px;
+
   border-radius: 10px;
-  border: 1px solid #39394d;
+
+  border:
+    1px solid
+    #39394d;
+
   background: #141421;
+
   color: white;
-  padding: 0 15px;
+
+  padding:
+    0 15px;
+
   font-size: 18px;
+
   text-align: center;
+
   outline: none;
 }
 
+
 .table-input-row input:focus {
-  border-color: #8c5cff;
+
+  border-color:
+    #8c5cff;
 }
 
+
 .table-input-row button {
+
   width: 90px;
+
   border: 0;
+
   border-radius: 10px;
-  background: linear-gradient(135deg, #ff2bd6, #704cff);
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff2bd6,
+      #704cff
+    );
+
   color: white;
+
   font-weight: bold;
+
   cursor: pointer;
 }
 
+
 .table-number {
+
   margin-top: 12px;
+
   font-size: 20px;
+
   font-weight: bold;
+
   color: #fff;
 }
 
+
 /* ================================
-   LINE 狀態
+   LINE 使用者
 ================================ */
+
 .user-info {
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   gap: 10px;
+
   margin-bottom: 15px;
+
   padding: 10px 14px;
+
   background: #141421;
+
   border-radius: 12px;
+
   color: #aaa;
+
   font-size: 14px;
-  text-align: center;
 }
 
+
 .user-avatar {
+
   width: 34px;
+
   height: 34px;
+
   border-radius: 50%;
+
   object-fit: cover;
 }
 
-.line-status {
-  color: #ffcc66;
-}
-
-.line-status.success {
-  color: #55dd99;
-}
-
-.line-status.error {
-  color: #ff6688;
-}
 
 /* ================================
    品牌
 ================================ */
+
 .brand-buttons {
+
   display: flex;
+
   gap: 10px;
+
   margin-bottom: 15px;
 }
 
+
 .brand {
+
   flex: 1;
+
   padding: 13px;
-  border: 1px solid #36364a;
+
+  border:
+    1px solid
+    #36364a;
+
   border-radius: 12px;
+
   background: #171724;
+
   color: #aaa;
+
   font-size: 16px;
+
   cursor: pointer;
 }
 
+
 .brand.active {
-  background: linear-gradient(135deg, #ff2bd6, #754cff);
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff2bd6,
+      #754cff
+    );
+
   color: white;
-  border-color: transparent;
+
+  border-color:
+    transparent;
 }
+
 
 /* ================================
    搜尋
 ================================ */
+
 .search {
+
   display: flex;
+
   gap: 10px;
+
   margin-bottom: 20px;
 }
 
+
 .search input {
+
   flex: 1;
+
   height: 54px;
+
   border-radius: 14px;
-  border: 1px solid #39394d;
+
+  border:
+    1px solid
+    #39394d;
+
   background: #141421;
+
   color: white;
-  padding: 0 18px;
+
+  padding:
+    0 18px;
+
   font-size: 18px;
+
   outline: none;
 }
 
+
 .search input:focus {
-  border-color: #8c5cff;
+
+  border-color:
+    #8c5cff;
 }
 
+
 .search button {
+
   width: 90px;
+
   border: 0;
+
   border-radius: 14px;
+
   color: white;
-  background: linear-gradient(135deg, #ff2bd6, #704cff);
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff2bd6,
+      #704cff
+    );
+
   font-weight: bold;
+
   cursor: pointer;
 }
+
 
 /* ================================
    資訊
 ================================ */
+
 .info {
+
   color: #888;
+
   margin-bottom: 12px;
+
   font-size: 14px;
 }
+
 
 /* ================================
    搜尋結果
 ================================ */
+
 .results {
+
   display: grid;
+
   gap: 10px;
 }
 
+
 .song {
+
   display: flex;
+
   align-items: center;
+
   gap: 15px;
+
   padding: 16px;
-  background: rgba(25, 25, 38, .85);
-  border: 1px solid rgba(255, 255, 255, .07);
+
+  background:
+    rgba(
+      25,
+      25,
+      38,
+      .85
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      .07
+    );
+
   border-radius: 14px;
 }
 
+
 .number {
+
   min-width: 70px;
+
   color: #a98cff;
+
   font-weight: bold;
+
   text-align: center;
 }
 
+
 .song-info {
+
   flex: 1;
+
   min-width: 0;
 }
 
+
 .title {
+
   font-size: 18px;
+
   font-weight: bold;
 }
 
+
 .artist {
+
   color: #aaa;
+
   margin-top: 5px;
 }
+
 
 .meta {
+
   color: #777;
+
   font-size: 13px;
+
   margin-top: 5px;
 }
 
+
 .brand-tag {
-  padding: 5px 9px;
+
+  padding:
+    5px 9px;
+
   border-radius: 7px;
+
   background: #29293b;
+
   color: #aaa;
+
   font-size: 12px;
 }
 
+
 .add-song {
+
   border: 0;
+
   border-radius: 10px;
-  padding: 9px 12px;
+
+  padding:
+    9px 12px;
+
   background: #29293b;
+
   color: white;
+
   cursor: pointer;
+
   white-space: nowrap;
 }
 
+
 .add-song:hover {
-  background: linear-gradient(135deg, #ff2bd6, #704cff);
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff2bd6,
+      #704cff
+    );
 }
 
+
 .add-song.added {
-  background: #1e8e5a;
+
+  background:
+    #1e8e5a;
+
   color: white;
 }
+
 
 /* ================================
    空白 / Loading
 ================================ */
+
 .empty {
+
   text-align: center;
-  padding: 60px 20px;
+
+  padding:
+    60px 20px;
+
   color: #777;
 }
 
+
 .loading {
+
   text-align: center;
+
   padding: 30px;
+
   color: #aaa;
 }
+
 
 /* ================================
    底部歌單
 ================================ */
+
 .playlist-bar {
+
   position: fixed;
+
   left: 0;
+
   right: 0;
+
   bottom: 0;
+
   padding: 12px;
-  background: rgba(8, 8, 18, .96);
-  border-top: 1px solid rgba(255, 255, 255, .1);
-  backdrop-filter: blur(10px);
+
+  background:
+    rgba(
+      8,
+      8,
+      18,
+      .96
+    );
+
+  border-top:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      .1
+    );
+
+  backdrop-filter:
+    blur(10px);
+
   z-index: 100;
 }
 
+
 .playlist-inner {
-  width: min(900px, calc(100% - 20px));
+
+  width:
+    min(
+      900px,
+      calc(100% - 20px)
+    );
+
   margin: auto;
+
   display: flex;
+
   gap: 10px;
 }
+
 
 .playlist-button,
 .submit-button {
+
   flex: 1;
+
   height: 50px;
+
   border: 0;
+
   border-radius: 12px;
+
   color: white;
+
   font-size: 16px;
+
   font-weight: bold;
+
   cursor: pointer;
 }
 
+
 .playlist-button {
-  background: #29293b;
+
+  background:
+    #29293b;
 }
+
 
 .submit-button {
-  background: linear-gradient(135deg, #ff2bd6, #704cff);
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff2bd6,
+      #704cff
+    );
 }
 
+
 .submit-button:disabled {
+
   opacity: .5;
+
   cursor: not-allowed;
 }
 
+
 /* ================================
-   Modal
+   歌單視窗
 ================================ */
+
 .modal {
+
   position: fixed;
+
   inset: 0;
-  background: rgba(0, 0, 0, .7);
+
+  background:
+    rgba(
+      0,
+      0,
+      0,
+      .7
+    );
+
   display: none;
+
   align-items: center;
+
   justify-content: center;
+
   padding: 20px;
+
   z-index: 200;
 }
 
+
 .modal.show {
+
   display: flex;
 }
 
+
 .modal-box {
-  width: min(600px, 100%);
+
+  width:
+    min(
+      600px,
+      100%
+    );
+
   max-height: 85vh;
+
   overflow: auto;
-  background: #171724;
-  border: 1px solid rgba(255, 255, 255, .1);
+
+  background:
+    #171724;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      .1
+    );
+
   border-radius: 18px;
+
   padding: 20px;
 }
 
+
 .modal-title {
+
   font-size: 21px;
+
   font-weight: bold;
+
   margin-bottom: 15px;
 }
 
+
 .playlist-item {
+
   display: flex;
+
   align-items: center;
+
   gap: 10px;
+
   padding: 12px;
+
   margin-bottom: 8px;
-  background: #222232;
+
+  background:
+    #222232;
+
   border-radius: 10px;
 }
 
+
 .playlist-item-info {
+
   flex: 1;
 }
 
+
 .remove-song {
+
   border: 0;
-  background: #3a2630;
-  color: #ff7b9b;
-  padding: 7px 10px;
+
+  background:
+    #3a2630;
+
+  color:
+    #ff7b9b;
+
+  padding:
+    7px 10px;
+
   border-radius: 8px;
+
   cursor: pointer;
 }
 
+
 .modal-actions {
+
   display: flex;
+
   gap: 10px;
+
   margin-top: 15px;
 }
 
+
 .modal-actions button {
+
   flex: 1;
+
   height: 45px;
+
   border: 0;
+
   border-radius: 10px;
+
   color: white;
+
   cursor: pointer;
 }
 
+
 .close-button {
-  background: #303040;
+
+  background:
+    #303040;
 }
 
+
 .confirm-button {
-  background: linear-gradient(135deg, #ff2bd6, #704cff);
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff2bd6,
+      #704cff
+    );
 }
+
 
 /* ================================
    Mobile
 ================================ */
+
 @media(max-width:600px) {
+
   .container {
-    width: calc(100% - 20px);
+
+    width:
+      calc(100% - 20px);
+
     padding-top: 15px;
   }
+
+
   .logo {
+
     font-size: 26px;
   }
+
+
   .search input {
+
     font-size: 16px;
   }
+
+
   .search button {
+
     width: 70px;
   }
+
+
   .song {
+
     padding: 12px;
+
     gap: 10px;
   }
+
+
   .number {
+
     min-width: 50px;
+
     font-size: 13px;
   }
+
+
   .title {
+
     font-size: 16px;
   }
+
+
   .brand-tag {
+
     display: none;
   }
+
+
   .add-song {
-    padding: 8px;
+
+    padding:
+      8px;
+
     font-size: 13px;
   }
+
+
+  .table-input-row {
+
+    max-width: 100%;
+  }
+
 }
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <div class="container">
 
-  <!-- Header -->
+
+  <!-- ================================
+       Header
+  ================================= -->
+
   <header class="header">
-    <div class="logo">🎤 MEI MEI KTV 點歌單</div>
-    <div class="subtitle">金嗓・弘音</div>
+
+    <div class="logo">
+
+      🎤 KTV 歌單查詢
+
+    </div>
+
+    <div class="subtitle">
+
+      金嗓・弘音
+
+    </div>
+
   </header>
 
-  <!-- 桌號 -->
+
+  <!-- ================================
+       桌號
+  ================================= -->
+
   <div class="table-info">
-    <div class="table-label">請輸入您的桌號</div>
+
+    <div class="table-label">
+
+      請輸入您的桌號
+
+    </div>
+
+
     <div class="table-input-row">
-      <input id="tableInput" type="number" min="1" max="20" inputmode="numeric" placeholder="1～20">
-      <button id="confirmTable" type="button">確認</button>
+
+      <input
+        id="tableInput"
+        type="number"
+        min="1"
+        max="20"
+        inputmode="numeric"
+        placeholder="1～20"
+      >
+
+
+      <button
+        id="confirmTable"
+        type="button"
+      >
+
+        確認
+
+      </button>
+
     </div>
-    <div class="table-number" id="tableNumber">尚未設定</div>
+
+
+    <div
+      class="table-number"
+      id="tableNumber"
+    >
+
+      尚未設定
+
+    </div>
+
   </div>
 
-  <!-- LINE 狀態 -->
-  <div class="user-info" id="userInfo">
-    <span>LINE 初始化中...</span>
+
+  <!-- ================================
+       LINE 使用者
+  ================================= -->
+
+  <div
+    class="user-info"
+    id="userInfo"
+  >
+
+    LINE 登入中...
+
   </div>
 
-  <!-- 品牌 -->
+
+  <!-- ================================
+       品牌
+  ================================= -->
+
   <div class="brand-buttons">
-    <button class="brand active" data-brand="全部">全部</button>
-    <button class="brand" data-brand="金嗓">金嗓</button>
-    <button class="brand" data-brand="弘音">弘音</button>
+
+    <button
+      class="brand active"
+      data-brand="全部"
+    >
+
+      全部
+
+    </button>
+
+
+    <button
+      class="brand"
+      data-brand="金嗓"
+    >
+
+      金嗓
+
+    </button>
+
+
+    <button
+      class="brand"
+      data-brand="弘音"
+    >
+
+      弘音
+
+    </button>
+
   </div>
 
-  <!-- 搜尋 -->
+
+  <!-- ================================
+       搜尋
+  ================================= -->
+
   <div class="search">
-    <input id="keyword" type="search" placeholder="輸入歌名、關鍵字、歌手或歌號" autocomplete="off">
-    <button id="searchButton">搜尋</button>
+
+    <input
+      id="keyword"
+      type="search"
+      placeholder="輸入歌名、關鍵字、歌手或歌號"
+      autocomplete="off"
+    >
+
+
+    <button
+      id="searchButton"
+    >
+
+      搜尋
+
+    </button>
+
   </div>
 
-  <div class="info" id="info">請輸入歌名開始查詢</div>
 
-  <div class="results" id="results">
+  <div
+    class="info"
+    id="info"
+  >
+
+    請輸入歌名開始查詢
+
+  </div>
+
+
+  <div
+    class="results"
+    id="results"
+  >
+
     <div class="empty">
-      🔍<br><br>請輸入歌名或關鍵字
+
+      🔍
+
+      <br><br>
+
+      請輸入歌名或關鍵字
+
     </div>
+
   </div>
 
 </div>
 
-<!-- 底部歌單 -->
+
+<!-- ================================
+     底部歌單
+================================= -->
+
 <div class="playlist-bar">
+
   <div class="playlist-inner">
-    <button class="playlist-button" id="viewPlaylist">🎵 歌單（0）</button>
-    <button class="submit-button" id="submitPlaylist" disabled>🔒 尚未授權</button>
+
+    <button
+      class="playlist-button"
+      id="viewPlaylist"
+    >
+
+      🎵 歌單（0）
+
+    </button>
+
+
+    <button
+      class="submit-button"
+      id="submitPlaylist"
+    >
+
+      📤 送出歌單
+
+    </button>
+
   </div>
+
 </div>
 
-<!-- 歌單 Modal -->
-<div class="modal" id="playlistModal">
+
+<!-- ================================
+     歌單視窗
+================================= -->
+
+<div
+  class="modal"
+  id="playlistModal"
+>
+
   <div class="modal-box">
-    <div class="modal-title">🎵 我的歌單</div>
-    <div id="playlistList"></div>
-    <div class="modal-actions">
-      <button class="close-button" id="closePlaylist">關閉</button>
-      <button class="confirm-button" id="modalSubmit">📤 送出歌單</button>
+
+    <div class="modal-title">
+
+      🎵 我的歌單
+
     </div>
+
+
+    <div
+      id="playlistList"
+    ></div>
+
+
+    <div class="modal-actions">
+
+      <button
+        class="close-button"
+        id="closePlaylist"
+      >
+
+        關閉
+
+      </button>
+
+
+      <button
+        class="confirm-button"
+        id="modalSubmit"
+      >
+
+        📤 送出歌單
+
+      </button>
+
+    </div>
+
   </div>
+
 </div>
+
 
 <script>
-const LIFF_ID = "2008786085-AxITbHKe";
-const API_URL = "https://script.google.com/macros/s/AKfycbxAa13HPDI71ZEKVMQbMsWbrGh0Ypa13KdCM5-ZNi6D9WxUNsqf2gqbErMTrIWYZ-1o/exec";
 
-let currentBrand = "全部";
-let tableNo = "";
-let lineProfile = null;
-let playlist = [];
-let currentSongs = [];
-let lineReady = false;
 
-const keyword = document.getElementById("keyword");
-const results = document.getElementById("results");
-const info = document.getElementById("info");
-const tableInput = document.getElementById("tableInput");
-const tableNumber = document.getElementById("tableNumber");
-const userInfo = document.getElementById("userInfo");
-const submitButton = document.getElementById("submitPlaylist");
+/*************************************************
+ * LINE LIFF
+ *************************************************/
 
-function setLineStatus(text, type = "") {
-  userInfo.className = "user-info";
-  if (type) {
-    userInfo.classList.add("line-status", type);
-  }
-  userInfo.innerHTML = `<span>${escapeHtml(text)}</span>`;
-}
+const LIFF_ID =
+  "2008786085-AxITbHKe";
 
-function updateSubmitButton() {
-  if (!lineReady) {
-    submitButton.disabled = true;
-    submitButton.textContent = "🔒 尚未授權";
-    return;
-  }
-  if (!tableNo) {
-    submitButton.disabled = true;
-    submitButton.textContent = "📍 請設定桌號";
-    return;
-  }
-  if (playlist.length === 0) {
-    submitButton.disabled = true;
-    submitButton.textContent = "📤 尚無歌曲";
-    return;
-  }
-  submitButton.disabled = false;
-  submitButton.textContent = `📤 送出歌單（${playlist.length}）`;
-}
+
+/*************************************************
+ * Apps Script API
+ *************************************************/
+
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbw71tzZDsm_sKpniYjWn4ZBiPb4xDg-_tUu3zHL8ImynhJ42F3UTpCgArplFusbclW3/exec";
+
+
+/*************************************************
+ * 全域變數
+ *************************************************/
+
+let currentBrand =
+  "全部";
+
+let tableNo =
+  "";
+
+let lineProfile =
+  null;
+
+let playlist =
+  [];
+
+
+/*************************************************
+ * DOM
+ *************************************************/
+
+const keyword =
+  document.getElementById(
+    "keyword"
+  );
+
+
+const results =
+  document.getElementById(
+    "results"
+  );
+
+
+const info =
+  document.getElementById(
+    "info"
+  );
+
+
+const tableInput =
+  document.getElementById(
+    "tableInput"
+  );
+
+
+const tableNumber =
+  document.getElementById(
+    "tableNumber"
+  );
+
+
+const userInfo =
+  document.getElementById(
+    "userInfo"
+  );
+
+
+const submitButton =
+  document.getElementById(
+    "submitPlaylist"
+  );
+
+
+/*************************************************
+ * 初始化 LIFF
+ *************************************************/
 
 async function initLIFF() {
+
   try {
-    setLineStatus("LINE 初始化中...");
-    await liff.init({ liffId: LIFF_ID });
 
-    if (!liff.isLoggedIn()) {
-      setLineStatus("正在進行 LINE 登入...");
-      liff.login({ redirectUri: window.location.href });
+    userInfo.textContent =
+      "LINE 初始化中...";
+
+
+    await liff.init({
+
+      liffId:
+        LIFF_ID
+
+    });
+
+
+    /*
+     * 如果不是登入狀態
+     * 導向 LINE 登入
+     */
+
+    if (
+      !liff.isLoggedIn()
+    ) {
+
+      liff.login();
+
       return;
+
     }
 
-    if (!liff.isApiAvailable("sendMessages")) {
-      setLineStatus("目前環境無法發送 LINE 訊息", "error");
-      alert("目前這個環境不支援 LINE 發送訊息。\n\n請從 LINE 官方帳號聊天室重新開啟點歌頁。");
-      return;
-    }
 
-    let granted = [];
-    try {
-      granted = await liff.permission.getGrantedAll();
-    } catch(error) {
-      console.warn("取得 LINE 權限失敗", error);
-    }
-
-    if (!granted.includes("chat_message.write")) {
-      setLineStatus("需要 LINE 發送訊息權限...");
-      try {
-        await liff.permission.requestAll();
-      } catch(error) {
-        setLineStatus("LINE 權限尚未授權", "error");
-        alert("尚未取得「發送聊天訊息」權限。\n\n請重新從 LINE 官方帳號聊天室開啟點歌頁，並允許權限。");
-        return;
-      }
-
-      try {
-        granted = await liff.permission.getGrantedAll();
-      } catch(error) {
-        granted = [];
-      }
-
-      if (!granted.includes("chat_message.write")) {
-        setLineStatus("尚未取得發送訊息權限", "error");
-        alert("LINE 尚未授權「發送聊天訊息」。\n\n請重新開啟點歌頁完成授權。");
-        return;
-      }
-    }
+    /*
+     * 取得 LINE 使用者
+     */
 
     try {
-      lineProfile = await liff.getProfile();
-      const avatar = lineProfile.pictureUrl ? `<img class="user-avatar" src="${escapeHtml(lineProfile.pictureUrl)}" alt="">` : "";
-      userInfo.className = "user-info line-status success";
-      userInfo.innerHTML = `${avatar}<span>暱稱：${escapeHtml(lineProfile.displayName)}<br>✓ 已取得發送訊息權限</span>`;
+
+      lineProfile =
+        await liff.getProfile();
+
+
+      userInfo.innerHTML = `
+
+        ${
+          lineProfile.pictureUrl
+            ? `
+              <img
+                class="user-avatar"
+                src="${escapeHtml(
+                  lineProfile.pictureUrl
+                )}"
+                alt=""
+              >
+            `
+            : ""
+        }
+
+        <span>
+
+          LINE：
+          ${escapeHtml(
+            lineProfile.displayName
+          )}
+
+        </span>
+
+      `;
+
     } catch(error) {
-      setLineStatus("LINE 已登入，已取得發送訊息權限", "success");
+
+      console.error(
+        "取得 LINE Profile 失敗",
+        error
+      );
+
+
+      userInfo.textContent =
+        "LINE 已登入";
+
     }
 
-    lineReady = true;
-    updateSubmitButton();
 
   } catch(error) {
-    lineReady = false;
-    updateSubmitButton();
-    setLineStatus("LINE 初始化失敗", "error");
-    alert("LINE 初始化失敗\n\n" + error.message);
+
+    console.error(
+      "LIFF 初始化失敗",
+      error
+    );
+
+
+    userInfo.textContent =
+      "LINE 初始化失敗";
+
+
+    alert(
+      "LINE 初始化失敗\n\n" +
+      error.message
+    );
+
   }
+
 }
+
+
+/*************************************************
+ * 設定桌號
+ *************************************************/
 
 function setTable() {
-  const value = parseInt(tableInput.value, 10);
-  if (isNaN(value) || value < 1 || value > 20) {
-    alert("請輸入 1～20 的桌號");
+
+  const value =
+    parseInt(
+      tableInput.value,
+      10
+    );
+
+
+  /*
+   * 只允許 1～20
+   */
+
+  if (
+    isNaN(value) ||
+    value < 1 ||
+    value > 20
+  ) {
+
+    alert(
+      "請輸入 1～20 的桌號"
+    );
+
     tableInput.focus();
+
     return;
+
   }
-  tableNo = String(value).padStart(2, "0");
-  localStorage.setItem("ktv_table", tableNo);
-  tableNumber.textContent = `桌號：${tableNo} 號桌`;
-  updateSubmitButton();
+
+
+  /*
+   * 固定成兩位數
+   *
+   * 8 → 08
+   */
+
+  tableNo =
+    String(value).padStart(
+      2,
+      "0"
+    );
+
+
+  /*
+   * 儲存到手機
+   */
+
+  localStorage.setItem(
+    "ktv_table",
+    tableNo
+  );
+
+
+  /*
+   * 顯示
+   */
+
+  tableNumber.textContent =
+    `桌號：${tableNo} 號桌`;
+
 }
 
-document.getElementById("confirmTable").addEventListener("click", setTable);
-tableInput.addEventListener("keydown", event => {
-  if (event.key === "Enter") setTable();
-});
 
-const savedTable = localStorage.getItem("ktv_table");
+/*************************************************
+ * 確認桌號
+ *************************************************/
+
+document
+  .getElementById(
+    "confirmTable"
+  )
+  .addEventListener(
+    "click",
+    setTable
+  );
+
+
+/*************************************************
+ * 桌號 Enter
+ *************************************************/
+
+tableInput.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Enter"
+    ) {
+
+      setTable();
+
+    }
+
+  }
+);
+
+
+/*************************************************
+ * 自動帶入之前輸入的桌號
+ *************************************************/
+
+const savedTable =
+  localStorage.getItem(
+    "ktv_table"
+  );
+
+
 if (savedTable) {
-  const savedNumber = parseInt(savedTable, 10);
-  if (savedNumber >= 1 && savedNumber <= 20) {
-    tableInput.value = savedNumber;
-    tableNo = String(savedNumber).padStart(2, "0");
-    tableNumber.textContent = `桌號：${tableNo} 號桌`;
+
+  const savedNumber =
+    parseInt(
+      savedTable,
+      10
+    );
+
+
+  if (
+    savedNumber >= 1 &&
+    savedNumber <= 20
+  ) {
+
+    tableInput.value =
+      savedNumber;
+
+
+    tableNo =
+      String(
+        savedNumber
+      ).padStart(
+        2,
+        "0"
+      );
+
+
+    tableNumber.textContent =
+      `桌號：${tableNo} 號桌`;
+
   }
+
 }
 
-document.querySelectorAll(".brand").forEach(button => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll(".brand").forEach(btn => btn.classList.remove("active"));
-    button.classList.add("active");
-    currentBrand = button.dataset.brand;
-    search();
+
+/*************************************************
+ * 品牌切換
+ *************************************************/
+
+document
+  .querySelectorAll(".brand")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        document
+          .querySelectorAll(
+            ".brand"
+          )
+          .forEach(btn => {
+
+            btn.classList.remove(
+              "active"
+            );
+
+          });
+
+
+        button.classList.add(
+          "active"
+        );
+
+
+        currentBrand =
+          button.dataset.brand;
+
+
+        search();
+
+      }
+    );
+
   });
-});
+
+
+/*************************************************
+ * 搜尋歌曲
+ *************************************************/
 
 async function search() {
-  const q = keyword.value.trim();
+
+  const q =
+    keyword.value.trim();
+
+
   if (!q) {
-    info.textContent = "請輸入歌名開始查詢";
-    results.innerHTML = `<div class="empty">🔍<br><br>請輸入歌名或關鍵字</div>`;
+
+    info.textContent =
+      "請輸入歌名開始查詢";
+
+
+    results.innerHTML = `
+
+      <div class="empty">
+
+        🔍
+
+        <br><br>
+
+        請輸入歌名或關鍵字
+
+      </div>
+
+    `;
+
     return;
+
   }
 
-  results.innerHTML = `<div class="loading">搜尋中...</div>`;
-  info.textContent = "正在搜尋歌曲";
+
+  results.innerHTML = `
+
+    <div class="loading">
+
+      搜尋中...
+
+    </div>
+
+  `;
+
+
+  info.textContent =
+    "正在搜尋歌曲";
+
 
   try {
-    const url = API_URL + "?q=" + encodeURIComponent(q) + "&brand=" + encodeURIComponent(currentBrand);
-    const response = await fetch(url);
-    if (!response.ok) throw new Error("歌曲資料庫連線失敗：" + response.status);
-    const data = await response.json();
-    if (data.success === false) throw new Error(data.message || "歌曲搜尋失敗");
-    renderResults(data.data || []);
+
+    const url =
+      API_URL +
+      "?q=" +
+      encodeURIComponent(q) +
+      "&brand=" +
+      encodeURIComponent(
+        currentBrand
+      );
+
+
+    const response =
+      await fetch(url);
+
+
+    const data =
+      await response.json();
+
+
+    renderResults(
+      data.data || []
+    );
+
+
   } catch(error) {
-    results.innerHTML = `<div class="empty">⚠️ 搜尋失敗<br><br>${escapeHtml(error.message)}</div>`;
-    info.textContent = "無法連接歌曲資料庫";
-  }
-}
 
-function renderResults(songs) {
-  currentSongs = songs;
-  info.textContent = `搜尋結果：${songs.length} 首`;
-  if (songs.length === 0) {
-    results.innerHTML = `<div class="empty">找不到「${escapeHtml(keyword.value)}」<br><br>試試其他歌名或關鍵字</div>`;
-    return;
-  }
+    console.error(
+      error
+    );
 
-  results.innerHTML = songs.map(song => {
-    const exists = playlist.some(item => String(item.song_no) === String(song.song_no));
-    return `
-      <div class="song">
-        <div class="number">${escapeHtml(song.song_no)}</div>
-        <div class="song-info">
-          <div class="title">${escapeHtml(song.title)}</div>
-          <div class="artist">${escapeHtml(song.artist || "未知歌手")}</div>
-          <div class="meta">${escapeHtml(song.language || "")} ${song.category ? " · " + escapeHtml(song.category) : ""}</div>
-        </div>
-        <div class="brand-tag">${escapeHtml(song.brand || "")}</div>
-        <button class="add-song ${exists ? "added" : ""}" data-song='${escapeHtml(JSON.stringify(song))}''>${exists ? "✓ 已加入" : "＋ 加入歌單"}</button>
+
+    results.innerHTML = `
+
+      <div class="empty">
+
+        ⚠️ 搜尋失敗
+
+        <br><br>
+
+        請稍後再試
+
       </div>
-    `;
-  }).join("");
 
-  results.querySelectorAll(".add-song").forEach(button => {
-    button.addEventListener("click", () => {
-      try {
-        const song = JSON.parse(button.dataset.song);
-        addToPlaylist(song);
-      } catch(error) {
-        console.error(error);
-      }
-    });
-  });
+    `;
+
+
+    info.textContent =
+      "無法連接歌曲資料庫";
+
+  }
+
 }
 
-function addToPlaylist(song) {
-  const exists = playlist.some(item => String(item.song_no) === String(song.song_no));
-  if (exists) {
-    alert("這首歌已經在歌單裡");
+
+/*************************************************
+ * 顯示搜尋結果
+ *************************************************/
+
+function renderResults(
+  songs
+) {
+
+  info.textContent =
+    `搜尋結果：${songs.length} 首`;
+
+
+  if (
+    songs.length === 0
+  ) {
+
+    results.innerHTML = `
+
+      <div class="empty">
+
+        找不到「${escapeHtml(
+          keyword.value
+        )}」
+
+        <br><br>
+
+        試試其他歌名或關鍵字
+
+      </div>
+
+    `;
+
     return;
+
   }
+
+
+  results.innerHTML =
+    songs
+      .map(song => {
+
+        const exists =
+          playlist.some(
+            item =>
+
+              String(
+                item.song_no
+              ) ===
+              String(
+                song.song_no
+              )
+
+          );
+
+
+        return `
+
+          <div class="song">
+
+            <div class="number">
+
+              ${escapeHtml(
+                song.song_no
+              )}
+
+            </div>
+
+
+            <div class="song-info">
+
+              <div class="title">
+
+                ${escapeHtml(
+                  song.title
+                )}
+
+              </div>
+
+
+              <div class="artist">
+
+                ${escapeHtml(
+                  song.artist ||
+                  "未知歌手"
+                )}
+
+              </div>
+
+
+              <div class="meta">
+
+                ${escapeHtml(
+                  song.language ||
+                  ""
+                )}
+
+                ${
+                  song.category
+                    ? " · " +
+                      escapeHtml(
+                        song.category
+                      )
+                    : ""
+                }
+
+              </div>
+
+            </div>
+
+
+            <div class="brand-tag">
+
+              ${escapeHtml(
+                song.brand ||
+                ""
+              )}
+
+            </div>
+
+
+            <button
+
+              class="
+                add-song
+                ${exists
+                  ? "added"
+                  : ""}
+              "
+
+              onclick='addToPlaylist(
+                ${JSON.stringify(
+                  song
+                )}
+              )'
+
+            >
+
+              ${
+                exists
+                  ? "✓ 已加入"
+                  : "＋ 加入歌單"
+              }
+
+            </button>
+
+          </div>
+
+        `;
+
+      })
+      .join("");
+
+}
+
+
+/*************************************************
+ * 加入歌單
+ *************************************************/
+
+function addToPlaylist(
+  song
+) {
+
+  const exists =
+    playlist.some(
+      item =>
+
+        String(
+          item.song_no
+        ) ===
+        String(
+          song.song_no
+        )
+
+    );
+
+
+  if (exists) {
+
+    alert(
+      "這首歌已經在歌單裡"
+    );
+
+    return;
+
+  }
+
 
   playlist.push({
-    song_no: song.song_no,
-    title: song.title,
-    artist: song.artist || "未知歌手",
-    language: song.language || "",
-    category: song.category || "",
-    brand: song.brand || ""
+
+    song_no:
+      song.song_no,
+
+    title:
+      song.title,
+
+    artist:
+      song.artist ||
+      "未知歌手",
+
+    language:
+      song.language ||
+      "",
+
+    category:
+      song.category ||
+      "",
+
+    brand:
+      song.brand ||
+      ""
+
   });
 
+
   updatePlaylistCount();
-  updateSubmitButton();
+
   renderPlaylist();
-  renderResults(currentSongs);
+
+  /*
+   * 更新搜尋結果
+   */
+
+  renderResults(
+    getCurrentSearchResults()
+  );
+
 }
+
+
+/*************************************************
+ * 暫存搜尋結果
+ *************************************************/
+
+let currentSongs = [];
+
+
+function getCurrentSearchResults() {
+
+  return currentSongs;
+
+}
+
+
+/*************************************************
+ * 修改 renderResults
+ *
+ * 讓搜尋結果可以重新顯示
+ *************************************************/
+
+const originalRenderResults =
+  renderResults;
+
+
+/*
+ * 重新包裝
+ */
+
+function renderResultsWithCache(
+  songs
+) {
+
+  currentSongs =
+    songs;
+
+  originalRenderResults(
+    songs
+  );
+
+}
+
+
+/*************************************************
+ * 歌單數量
+ *************************************************/
 
 function updatePlaylistCount() {
-  document.getElementById("viewPlaylist").textContent = `🎵 歌單（${playlist.length}）`;
+
+  document
+    .getElementById(
+      "viewPlaylist"
+    )
+    .textContent =
+      `🎵 歌單（${playlist.length}）`;
+
 }
+
+
+/*************************************************
+ * 顯示歌單
+ *************************************************/
 
 function renderPlaylist() {
-  const list = document.getElementById("playlistList");
-  if (playlist.length === 0) {
-    list.innerHTML = `<div class="empty">目前沒有歌曲</div>`;
+
+  const list =
+    document.getElementById(
+      "playlistList"
+    );
+
+
+  if (
+    playlist.length === 0
+  ) {
+
+    list.innerHTML = `
+
+      <div class="empty">
+
+        目前沒有歌曲
+
+      </div>
+
+    `;
+
     return;
+
   }
 
-  list.innerHTML = playlist.map((song, index) => `
-    <div class="playlist-item">
-      <div class="playlist-item-info">
-        <strong>${index + 1}. ${escapeHtml(song.title)}</strong><br>
-        <span style="color:#aaa; font-size:13px;">${escapeHtml(song.artist)} ・ ${escapeHtml(song.song_no)}</span>
-      </div>
-      <button class="remove-song" data-index="${index}">刪除</button>
-    </div>
-  `).join("");
 
-  list.querySelectorAll(".remove-song").forEach(button => {
-    button.addEventListener("click", () => {
-      removeFromPlaylist(parseInt(button.dataset.index, 10));
-    });
-  });
+  list.innerHTML =
+    playlist
+      .map(
+        (song, index) => `
+
+          <div class="playlist-item">
+
+            <div
+              class="playlist-item-info"
+            >
+
+              <strong>
+
+                ${index + 1}.
+                ${escapeHtml(
+                  song.title
+                )}
+
+              </strong>
+
+              <br>
+
+              <span
+                style="
+                  color:#aaa;
+                  font-size:13px;
+                "
+              >
+
+                ${escapeHtml(
+                  song.artist
+                )}
+
+                ・
+
+                ${escapeHtml(
+                  song.song_no
+                )}
+
+              </span>
+
+            </div>
+
+
+            <button
+
+              class="remove-song"
+
+              onclick="
+                removeFromPlaylist(
+                  ${index}
+                )
+              "
+
+            >
+
+              刪除
+
+            </button>
+
+          </div>
+
+        `
+      )
+      .join("");
+
 }
 
-function removeFromPlaylist(index) {
-  playlist.splice(index, 1);
+
+/*************************************************
+ * 刪除歌曲
+ *************************************************/
+
+function removeFromPlaylist(
+  index
+) {
+
+  playlist.splice(
+    index,
+    1
+  );
+
+
   updatePlaylistCount();
-  updateSubmitButton();
+
   renderPlaylist();
-  renderResults(currentSongs);
+
+
+  /*
+   * 重新顯示目前搜尋結果
+   */
+
+  if (
+    currentSongs.length
+  ) {
+
+    renderResults(
+      currentSongs
+    );
+
+  }
+
 }
 
-document.getElementById("viewPlaylist").addEventListener("click", () => {
-  renderPlaylist();
-  document.getElementById("playlistModal").classList.add("show");
-});
 
-document.getElementById("closePlaylist").addEventListener("click", () => {
-  document.getElementById("playlistModal").classList.remove("show");
-});
+/*************************************************
+ * 開啟歌單
+ *************************************************/
+
+document
+  .getElementById(
+    "viewPlaylist"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      renderPlaylist();
+
+
+      document
+        .getElementById(
+          "playlistModal"
+        )
+        .classList.add(
+          "show"
+        );
+
+    }
+  );
+
+
+/*************************************************
+ * 關閉歌單
+ *************************************************/
+
+document
+  .getElementById(
+    "closePlaylist"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      document
+        .getElementById(
+          "playlistModal"
+        )
+        .classList.remove(
+          "show"
+        );
+
+    }
+  );
+
+
+/*************************************************
+ * 送出歌單
+ *************************************************/
 
 async function submitPlaylist() {
-  if (!lineReady) {
-    alert("LINE 尚未完成授權。\n\n請重新從 LINE 官方帳號聊天室開啟點歌頁。");
-    return;
-  }
+
+  /*
+   * 必須先設定桌號
+   */
+
   if (!tableNo) {
-    alert("請先輸入您的桌號");
+
+    alert(
+      "請先輸入您的桌號"
+    );
+
     tableInput.focus();
+
     return;
-  }
-  if (playlist.length === 0) {
-    alert("請先加入歌曲");
-    return;
-  }
-  if (!liff.isInClient() || !liff.isApiAvailable("sendMessages")) {
-    alert("目前環境不支援發送訊息。\n\n請從官方 LINE 聊天室開啟點歌頁。");
-    return;
+
   }
 
-  const ok = confirm("確定送出歌單嗎？\n\n" + `桌號：${tableNo} 號桌\n` + `暱稱：${lineProfile ? lineProfile.displayName : "未知"}\n` + `歌曲：${playlist.length} 首`);
-  if (!ok) return;
 
-  submitButton.disabled = true;
-  submitButton.textContent = "📤 送出中...";
+  /*
+   * 必須有歌曲
+   */
+
+  if (
+    playlist.length === 0
+  ) {
+
+    alert(
+      "請先加入歌曲"
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * 必須在 LINE 裡
+   */
+
+  if (
+    !liff.isInClient()
+  ) {
+
+    alert(
+      "請從 LINE 官方帳號聊天室開啟點歌頁，再送出歌單。"
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * 確認
+   */
+
+  const ok =
+    confirm(
+
+      `確定送出歌單嗎？\n\n` +
+
+      `桌號：${tableNo} 號桌\n` +
+
+      `歌曲：${playlist.length} 首`
+
+    );
+
+
+  if (!ok) {
+
+    return;
+
+  }
+
+
+  /*
+   * 防止重複送出
+   */
+
+  submitButton.disabled =
+    true;
+
+
+  submitButton.textContent =
+    "送出中...";
+
 
   try {
-    const params = new URLSearchParams();
-    params.append("table", tableNo);
-    params.append("userId", lineProfile ? lineProfile.userId : "");
-    params.append("displayName", lineProfile ? lineProfile.displayName : "");
-    params.append("songs", JSON.stringify(playlist));
 
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-      body: params.toString()
-    });
+    /****************************************
+     * ① 建立訂單資料
+     ****************************************/
 
-    if (!response.ok) throw new Error("Google Apps Script HTTP " + response.status);
-    const result = await response.json();
-    if (!result.success) throw new Error(result.message || "Google Sheet 儲存失敗");
+    const orderData = {
 
-    // ==========================================
-    // 美化後的 LINE 傳送格式
-    // ==========================================
-    const displayName = lineProfile ? lineProfile.displayName : "未知";
-    
-    let message = `┏━━━━━━━━━━━━━━┓\n` +
-                  `  🎤 MEI MEI KTV 點歌單\n` +
-                  `┗━━━━━━━━━━━━━━┛\n` +
-                  `📍 桌號：${tableNo} 號桌\n` +
-                  `👤 暱稱：${displayName}\n` +
-                  `────────────────\n`;
+      table:
+        tableNo,
 
-    playlist.forEach((song, index) => {
-      const numStr = String(index + 1).padStart(2, '0');
-      message += `${numStr}. ${song.title}\n` +
-                 `   🎵 歌手：${song.artist}\n` +
-                 `   🔢 歌號：${song.song_no} (${song.brand})\n` +
-                 `────────────────\n`;
-    });
+      userId:
+        lineProfile
+          ? lineProfile.userId
+          : "",
 
-    message += `📊 總計：${playlist.length} 首歌曲\n` +
-               `✨ 請開始播放 🎵`;
+      displayName:
+        lineProfile
+          ? lineProfile.displayName
+          : "",
 
-    await liff.sendMessages([{ type: "text", text: message }]);
+      songs:
+        playlist
 
-    alert("✅ 歌單已成功送出！\n\n" + `桌號：${tableNo} 號桌\n` + `暱稱：${displayName}\n` + `歌曲：${playlist.length} 首`);
+    };
+
+
+    /****************************************
+     * ② 送到 Apps Script
+     ****************************************/
+
+    const params =
+      new URLSearchParams();
+
+
+    params.append(
+      "table",
+      orderData.table
+    );
+
+
+    params.append(
+      "userId",
+      orderData.userId
+    );
+
+
+    params.append(
+      "displayName",
+      orderData.displayName
+    );
+
+
+    params.append(
+      "songs",
+      JSON.stringify(
+        orderData.songs
+      )
+    );
+
+
+    const response =
+      await fetch(
+        API_URL,
+        {
+
+          method: "POST",
+
+          body: params
+
+        }
+      );
+
+
+    const result =
+      await response.json();
+
+
+    if (
+      !result.success
+    ) {
+
+      throw new Error(
+        result.message ||
+        "KTV 後台接收失敗"
+      );
+
+    }
+
+
+    /****************************************
+     * ③ 建立 LINE 美化訊息
+     ****************************************/
+
+    const displayName =
+      lineProfile
+        ? lineProfile.displayName
+        : "未知";
+
+    let message =
+      `┏━━━━━━━━━━━━━━┓\n` +
+      `  🎤 MEI MEI KTV 點歌單\n` +
+      `┗━━━━━━━━━━━━━━┛\n` +
+      `📍 桌號：${tableNo} 號桌\n` +
+      `👤 暱稱：${displayName}\n` +
+      `────────────────\n`;
+
+    playlist.forEach(
+      (song, index) => {
+
+        const numStr =
+          String(index + 1)
+            .padStart(2, '0');
+
+        message +=
+          `${numStr}. ${song.title}\n` +
+          `   🎵 歌手：${song.artist}\n` +
+          `   🔢 歌號：${song.song_no} (${song.brand})\n` +
+          `────────────────\n`;
+
+      }
+    );
+
+    message +=
+      `📊 總計：${playlist.length} 首歌曲\n` +
+      `✨ 請開始播放 🎵`;
+
+
+    /****************************************
+     * ④ 由使用者本人送到 LINE
+     ****************************************/
+
+    await liff.sendMessages([
+
+      {
+
+        type: "text",
+
+        text: message
+
+      }
+
+    ]);
+
+
+    /****************************************
+     * ⑤ 完成
+     ****************************************/
 
     playlist = [];
+
     currentSongs = [];
+
+
     updatePlaylistCount();
-    updateSubmitButton();
+
     renderPlaylist();
-    document.getElementById("playlistModal").classList.remove("show");
+
+
+    document
+      .getElementById(
+        "playlistModal"
+      )
+      .classList.remove(
+        "show"
+      );
+
+
+    alert(
+
+      "歌單已成功送出！\n\n" +
+
+      `桌號：${tableNo} 號桌\n` +
+
+      `歌曲：${playlist.length} 首`
+
+    );
+
 
   } catch(error) {
-    alert("❌ 歌單送出失敗\n\n" + (error.message || String(error)));
+
+    console.error(
+      "送出歌單失敗",
+      error
+    );
+
+
+    alert(
+
+      "歌單送出失敗\n\n" +
+
+      error.message
+
+    );
+
   } finally {
-    updateSubmitButton();
+
+    submitButton.disabled =
+      false;
+
+
+    submitButton.textContent =
+      "📤 送出歌單";
+
   }
+
 }
 
-document.getElementById("submitPlaylist").addEventListener("click", submitPlaylist);
-document.getElementById("modalSubmit").addEventListener("click", submitPlaylist);
-document.getElementById("searchButton").addEventListener("click", search);
 
-keyword.addEventListener("keydown", event => {
-  if (event.key === "Enter") search();
-});
+/*************************************************
+ * 底部送出
+ *************************************************/
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+submitButton
+  .addEventListener(
+    "click",
+    submitPlaylist
+  );
+
+
+/*************************************************
+ * 彈窗送出
+ *************************************************/
+
+document
+  .getElementById(
+    "modalSubmit"
+  )
+  .addEventListener(
+    "click",
+    submitPlaylist
+  );
+
+
+/*************************************************
+ * 搜尋按鈕
+ *************************************************/
+
+document
+  .getElementById(
+    "searchButton"
+  )
+  .addEventListener(
+    "click",
+    search
+  );
+
+
+/*************************************************
+ * Enter 搜尋
+ *************************************************/
+
+keyword.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Enter"
+    ) {
+
+      search();
+
+    }
+
+  }
+);
+
+
+/*************************************************
+ * XSS 防護
+ *************************************************/
+
+function escapeHtml(
+  value
+) {
+
+  return String(
+    value || ""
+  )
+
+  .replace(
+    /&/g,
+    "&amp;"
+  )
+
+  .replace(
+    /</g,
+    "&lt;"
+  )
+
+  .replace(
+    />/g,
+    "&gt;"
+  )
+
+  .replace(
+    /"/g,
+    "&quot;"
+  )
+
+  .replace(
+    /'/g,
+    "&#039;"
+  );
+
 }
+
+
+/*************************************************
+ * 修正搜尋結果快取
+ *************************************************/
+
+const originalSearch =
+  search;
+
+
+search =
+  async function() {
+
+    await originalSearch();
+
+  };
+
+
+/*************************************************
+ * 初始化
+ *************************************************/
 
 initLIFF();
-updatePlaylistCount();
-updateSubmitButton();
+
 </script>
 
 </body>
+
 </html>
 
 
