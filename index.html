@@ -231,7 +231,7 @@ body {
 
   align-items: center;
 
-  justify-content: center;
+  justify-content: space-between;
 
   gap: 10px;
 
@@ -248,6 +248,12 @@ body {
   font-size: 14px;
 }
 
+.user-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 
 .user-avatar {
 
@@ -258,6 +264,22 @@ body {
   border-radius: 50%;
 
   object-fit: cover;
+}
+
+.history-btn {
+  background: #2e2453;
+  color: #d1b3ff;
+  border: 1px solid #7c4dff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.history-btn:hover {
+  background: #7c4dff;
+  color: white;
 }
 
 
@@ -668,7 +690,7 @@ body {
 
 
 /* ================================
-   歌單視窗
+   歌單視窗 / 歷史視窗公用 Modal
 ================================ */
 
 .modal {
@@ -997,9 +1019,9 @@ body {
     class="user-info"
     id="userInfo"
   >
-
-    LINE 登入中...
-
+    <div class="user-left">
+      <span>LINE 登入中...</span>
+    </div>
   </div>
 
 
@@ -1179,6 +1201,49 @@ body {
 </div>
 
 
+<!-- ================================
+     歷史歌單視窗
+================================= -->
+
+<div
+  class="modal"
+  id="historyModal"
+>
+
+  <div class="modal-box">
+
+    <div class="modal-title">
+
+      📜 我的歷史點歌紀錄
+
+    </div>
+
+
+    <div
+      id="historyList"
+    >
+      <div class="loading">載入中...</div>
+    </div>
+
+
+    <div class="modal-actions">
+
+      <button
+        class="close-button"
+        id="closeHistory"
+      >
+
+        關閉
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 <script>
 
 
@@ -1195,7 +1260,7 @@ const LIFF_ID =
  *************************************************/
 
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbw71tzZDsm_sKpniYjWn4ZBiPb4xDg-_tUu3zHL8ImynhJ42F3UTpCgArplFusbclW3/exec";
+  "https://script.google.com/macros/s/AKfycbzSqUv6ZrisI93vgIB6H96j-d8dWOsCg1vlDo0ZKGJlQx8RLuHlAq2CRskj0Ndh-nD1/exec";
 
 
 /*************************************************
@@ -1269,8 +1334,11 @@ async function initLIFF() {
 
   try {
 
-    userInfo.textContent =
-      "LINE 初始化中...";
+    userInfo.innerHTML = `
+      <div class="user-left">
+        <span>LINE 初始化中...</span>
+      </div>
+    `;
 
 
     await liff.init({
@@ -1309,30 +1377,42 @@ async function initLIFF() {
 
       userInfo.innerHTML = `
 
-        ${
-          lineProfile.pictureUrl
-            ? `
-              <img
-                class="user-avatar"
-                src="${escapeHtml(
-                  lineProfile.pictureUrl
-                )}"
-                alt=""
-              >
-            `
-            : ""
-        }
+        <div class="user-left">
+          ${
+            lineProfile.pictureUrl
+              ? `
+                <img
+                  class="user-avatar"
+                  src="${escapeHtml(
+                    lineProfile.pictureUrl
+                  )}"
+                  alt=""
+                >
+              `
+              : ""
+          }
 
-        <span>
+          <span>
 
-          LINE：
-          ${escapeHtml(
-            lineProfile.displayName
-          )}
+            LINE：
+            ${escapeHtml(
+              lineProfile.displayName
+            )}
 
-        </span>
+          </span>
+        </div>
+
+        <button class="history-btn" id="openHistoryBtn">
+          📜 歷史歌單
+        </button>
 
       `;
+
+
+      // 綁定歷史歌單按鈕事件
+      document
+        .getElementById("openHistoryBtn")
+        .addEventListener("click", fetchUserHistory);
 
     } catch(error) {
 
@@ -1342,8 +1422,11 @@ async function initLIFF() {
       );
 
 
-      userInfo.textContent =
-        "LINE 已登入";
+      userInfo.innerHTML = `
+        <div class="user-left">
+          <span>LINE 已登入</span>
+        </div>
+      `;
 
     }
 
@@ -1356,8 +1439,11 @@ async function initLIFF() {
     );
 
 
-    userInfo.textContent =
-      "LINE 初始化失敗";
+    userInfo.innerHTML = `
+      <div class="user-left">
+        <span>LINE 初始化失敗</span>
+      </div>
+    `;
 
 
     alert(
@@ -1368,6 +1454,78 @@ async function initLIFF() {
   }
 
 }
+
+
+/*************************************************
+ * 查詢 LINE ID 歷史歌單
+ *************************************************/
+
+async function fetchUserHistory() {
+
+  const historyModal = document.getElementById("historyModal");
+  const historyList = document.getElementById("historyList");
+
+  historyModal.classList.add("show");
+  historyList.innerHTML = `<div class="loading">正在查詢歷史歌單...</div>`;
+
+  if (!lineProfile || !lineProfile.userId) {
+    historyList.innerHTML = `<div class="empty">無法取得 LINE 帳號資訊</div>`;
+    return;
+  }
+
+  try {
+    const url = API_URL + "?action=history&userId=" + encodeURIComponent(lineProfile.userId);
+    const response = await fetch(url);
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || "讀取歷史紀錄失敗");
+    }
+
+    const historyData = result.data || [];
+
+    if (historyData.length === 0) {
+      historyList.innerHTML = `<div class="empty">目前沒有歷史點歌紀錄</div>`;
+      return;
+    }
+
+    // 渲染歷史紀錄
+    historyList.innerHTML = historyData.map((item, idx) => `
+      <div class="playlist-item" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+        <div style="display: flex; width: 100%; justify-content: space-between; color: #a98cff; font-size: 13px;">
+          <span>訂單編號：${escapeHtml(item.orderId || 'N/A')}</span>
+          <span>桌號：${escapeHtml(item.table || 'N/A')} 號桌</span>
+        </div>
+        <div style="color: #ccc; font-size: 12px;">
+          時間：${escapeHtml(item.timestamp || 'N/A')}
+        </div>
+        <div style="width: 100%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; margin-top: 4px;">
+          ${Array.isArray(item.songs) ? item.songs.map((s, sIdx) => `
+            <div style="font-size: 14px; margin-bottom: 4px;">
+              ${sIdx + 1}. <strong>${escapeHtml(s.title)}</strong> - ${escapeHtml(s.artist)} <span style="color:#aaa; font-size:12px;">[${escapeHtml(s.song_no)}]</span>
+            </div>
+          `).join('') : '無歌曲資料'}
+        </div>
+      </div>
+    `).join("");
+
+  } catch (error) {
+    console.error("讀取歷史歌單失敗", error);
+    historyList.innerHTML = `<div class="empty">⚠️ 讀取失敗<br><br>${escapeHtml(error.message)}</div>`;
+  }
+
+}
+
+
+/*************************************************
+ * 關閉歷史視窗
+ *************************************************/
+
+document
+  .getElementById("closeHistory")
+  .addEventListener("click", () => {
+    document.getElementById("historyModal").classList.remove("show");
+  });
 
 
 /*************************************************
